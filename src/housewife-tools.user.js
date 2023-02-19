@@ -239,14 +239,16 @@ function makeLoginForm(action='LOGIN') {
       </div><br>`)
     let login = document.querySelector('#hwt-login')
     login.focus()
+    let passwordAdded = false
     login.addEventListener('keypress', function(ev) {
-      if (ev.key == 'Enter') {
+      if (ev.key == 'Enter' && !passwordAdded) {
         login.insertAdjacentHTML('afterend', `<br>
           <div class="hwt-login-password">
             <label for="hwt-password">Password:</label>
             <input type="password" id="hwt-password">
           </div>
         `)
+        passwordAdded = true
         let password = document.querySelector('#hwt-password')
         password.focus()
         password.addEventListener('keypress', function(ev) {
