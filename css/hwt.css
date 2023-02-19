@@ -4,6 +4,9 @@
 .hwt-cmdlink:hover {
   text-decoration: underline;
 }
+.hwt-btn.hwt-cmdlink {
+  text-decoration: none!important;
+}
 .hwt-btn:hover {
   background-color: #2F9CC8;
   color: #000;
