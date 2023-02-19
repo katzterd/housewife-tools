@@ -86,11 +86,11 @@ function handleIndex() {
   , lastBr = c.querySelector('br:last-of-type')
   lastBr.insertAdjacentHTML('afterend', `
     <div class="hwt-menu ${!isLoggedIn ? ` hwt-guest` : ''}">
-      <span tabindex="0" class="hwt-btn hwt-cmdlink hwt-members-only" data-command="BOARDS">boards</span>
-      <span tabindex="0" class="hwt-btn hwt-action hwt-guests-only" data-action="login">login</span>
-      <span tabindex="0" class="hwt-btn hwt-action hwt-guests-only" data-action="register">register</span>
-      <span tabindex="0" class="hwt-cmdlink hwt-btn" data-command="HELP">help</span>
-      <span tabindex="0" class="hwt-btn hwt-cmdlink hwt-members-only" data-command="LOGOUT">logout</span>
+      <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="BOARDS">boards</button>
+      <button class="hwt-btn hwt-action hwt-guests-only" data-action="login">login</button>
+      <button class="hwt-btn hwt-action hwt-guests-only" data-action="register">register</button>
+      <button class="hwt-cmdlink hwt-btn" data-command="HELP">help</button>
+      <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="LOGOUT">logout</button>
     </div>`)
 }
 
@@ -108,7 +108,7 @@ function handleBoardList() {
 function handleBoardPage(content) {
   pagination(content)
   getHeadLine(content)[0].previousElementSibling.insertAdjacentHTML('afterend', `
-    <span tabindex="0" class="hwt-cmdlink hwt-btn" data-command="BOARDS">^</span>`)
+    <button class="hwt-cmdlink hwt-btn" data-command="BOARDS">^</button>`)
   content.querySelectorAll('.postsnumber').forEach(p => {
     let n = p.textContent.match(/\[(.+)\]/)?.[1]
     if (n)
@@ -122,7 +122,7 @@ function handleTopic(content) {
   let [boardID, boardName, threadID] = parseHeadLine(headLine)?.slice(1)
   if (boardName!==0) {
     let html = `<span class="hwt-backlink">
-      <span tabindex="0" class="hwt-btn hwt-cmdlink" data-command="BOARD -n ${boardID}">&lt; [${boardID}] ${boardName}</span>
+      <button class="hwt-btn hwt-cmdlink" data-command="BOARD -n ${boardID}">&lt; [${boardID}] ${boardName}</button>
       [${threadID}]
     </span>`
     headLine[0].replaceWith(createElementFromHTML(html))
@@ -192,10 +192,10 @@ function createElementFromHTML(htmlString) {
 /*------------------------- App-specific utilities -------------------------*/
 // Turns a text node into a "link"
 function makeClickable(node, command) {
-  node.replaceWith(createElementFromHTML(`<span tabindex="0" class="hwt-cmdlink" data-command="${command}">${node.textContent}</span>`))
+  node.replaceWith(createElementFromHTML(`<button tabindex="0" class="hwt-cmdlink" data-command="${command}">${node.textContent}</button>`))
 }
 // Auto-inputting commands
-document.body.delegateEventListener('click', '.hwt-cmdlink', async function() {
+document.body.delegateEventListener(['click', 'input'], '.hwt-cmdlink', async function() {
   let command = this.dataset.command
   if (command) {
     runCommand(command)
@@ -276,13 +276,13 @@ function pagination(content=document.querySelector('.content')) {
       html =
       `<span class="hwt-pagination">
         ${current > 1 ?
-          `<span tabindex="0" class="hwt-cmdlink hwt-btn" data-command="FIRST">&lt;&lt;</span>
-          <span tabindex="0" class="hwt-cmdlink hwt-btn" data-command="PREV">&lt;</span>`
+          `<button class="hwt-cmdlink hwt-btn" data-command="FIRST">&lt;&lt;</button>
+          <button class="hwt-cmdlink hwt-btn" data-command="PREV">&lt;</button>`
         :''}
         ${node.textContent}
         ${current < total ?
-          `<span tabindex="0" class="hwt-cmdlink hwt-btn" data-command="NEXT">&gt;</span>
-          <span tabindex="0" class="hwt-cmdlink hwt-btn" data-command="LAST">&gt;&gt;</span>`
+          `<button class="hwt-cmdlink hwt-btn" data-command="NEXT">&gt;</button>
+          <button class="hwt-cmdlink hwt-btn" data-command="LAST">&gt;&gt;</button>`
         :''}
       </span>`
       node.replaceWith(createElementFromHTML(html))

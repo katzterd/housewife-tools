@@ -1,5 +1,9 @@
 .hwt-cmdlink, .hwt-btn {
   cursor: pointer;
+  font-family: inherit;
+  background: inherit;
+  color: inherit;
+  border: inherit;
 }
 .hwt-cmdlink:hover {
   text-decoration: underline;
@@ -40,7 +44,7 @@
 .hwt-guest .hwt-guests-only {
   display: initial;
 }
-.hwt-btn:focus {
+.hwt-btn:focus, .hwt-cmdlink:focus {
   outline: #5fbfff;
   outline-width: thin;
   outline-style: dotted;
