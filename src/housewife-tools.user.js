@@ -122,9 +122,7 @@ function handleTopic(content) {
   let [boardID, boardName, threadID] = parseHeadLine(headLine)?.slice(1)
   if (boardName!==0) {
     let html = `<span class="hwt-backlink">
-      <span tabindex="0" class="hwt-btn">
-        <span class="hwt-cmdlink" data-command="BOARD -n ${boardID}">&lt; [${boardID}] ${boardName}</span>
-      </span>
+      <span tabindex="0" class="hwt-btn hwt-cmdlink" data-command="BOARD -n ${boardID}">&lt; [${boardID}] ${boardName}</span>
       [${threadID}]
     </span>`
     headLine[0].replaceWith(createElementFromHTML(html))
