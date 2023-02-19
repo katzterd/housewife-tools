@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         HoseWife Tools
+// @name         HouseWife Tools
 // @namespace    https://www.0chan.pl/userjs/
 // @version      0.0.0
 // @description  UX extension for 314n.org
@@ -234,7 +234,7 @@ function pagination(content=document.querySelector('.content')) {
     else return false
   })
   if (found) { // Copy bagination to bottom
-    conent.insertAdjacentHTML('beforeend', html)
+    content.insertAdjacentHTML('beforeend', html)
   }
 }
 
