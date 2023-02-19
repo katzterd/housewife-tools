@@ -106,16 +106,39 @@ var injector = {
   remove: function(alias) {
   var id = `injector:${alias}`
   var style = document.getElementById(id)
-  if(style) {
+  if (style) {
     var head = document.head || document.getElementsByTagName('head')[0]
     if(head)
-    head.removeChild(document.getElementById(id))
+      head.removeChild(document.getElementById(id))
   }
   }
 }
 
 const baseCSS = GM_getResourceText("baseCSS")
 injector.inject('hwt', baseCSS)
+
+
+/*--------------------------- General utilities ----------------------------*/
+EventTarget.prototype.delegateEventListener = function(types, targetSelectors, listener, options) {
+  if (! (types instanceof Array))
+    types = types.split(' ')
+  if (! (targetSelectors instanceof Array))
+    targetSelectors = [targetSelectors]
+  types.forEach(type => {
+    this.addEventListener(type, ev => {
+      targetSelectors.some(selector => {
+        if (ev.target.matches(selector)) {
+          listener.bind(ev.target)(ev)
+          return true
+        }
+      })
+    }, options)
+  })
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 
 /*------------------------- App-specific utilities -------------------------*/
@@ -145,26 +168,3 @@ document.body.delegateEventListener('click', '.hwt-cmdlink', async function() {
     })
   }
 })
-
-
-/*--------------------------- General utilities ----------------------------*/
-EventTarget.prototype.delegateEventListener = function(types, targetSelectors, listener, options) {
-  if (! (types instanceof Array))
-    types = types.split(' ')
-  if (! (targetSelectors instanceof Array))
-    targetSelectors = [targetSelectors]
-  types.forEach(type => {
-    this.addEventListener(type, ev => {
-      targetSelectors.some(selector => {
-        if (ev.target.matches(selector)) {
-          listener.bind(ev.target)(ev)
-          return true
-        }
-      })
-    }, options)
-  })
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
