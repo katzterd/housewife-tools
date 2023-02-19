@@ -37,10 +37,10 @@ function determineState() {
   let [m, boardID, boardName, threadID] = headLine[0].textContent.match(/\[([0-9]+)\](?:\s*(.+?)[\s]{2,}\[([0-9]+)\])?/m) || [0,0,0,0]
   if (m) {
     if (boardName && threadID) {
-      handleRoute('topic', content)
+      handleTopic(content)
     }
     else {
-      handleBoardPage()
+      handleBoardPage(content)
     }
   }
   else {
@@ -90,12 +90,17 @@ function handleBoardList() {
   })
 }
 
-function handleBoardPage() {
-  document.querySelectorAll('.postsnumber').forEach(p => {
+function handleBoardPage(content) {
+  pagination(content)
+  content.querySelectorAll('.postsnumber').forEach(p => {
     let n = p.textContent.match(/\[(.+)\]/)?.[1]
     if (n)
       makeClickable(p, `TOPIC -n ${n}`)
   })
+}
+
+function handleTopic(content) {
+  pagination(content)
 }
 
 
@@ -148,15 +153,19 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+function createElementFromHTML(htmlString) {
+  var div = document.createElement('div');
+  div.innerHTML = htmlString.trim();
+
+  // Change this to div.childNodes to support multiple top-level nodes.
+  return div.firstChild;
+}
+
 
 /*------------------------- App-specific utilities -------------------------*/
 // Turns a text node into a "link"
 function makeClickable(node, command) {
-  let span = document.createElement('span')
-  span.dataset.command = command
-  span.classList.add('hwt-cmdlink')
-  span.textContent = node.textContent
-  node.replaceWith(span)
+  node.replaceWith(createElementFromHTML(`<span class="hwt-cmdlink" data-command="${command}">${node.textContent}</span>`))
 }
 // Auto-inputting commands
 document.body.delegateEventListener('click', '.hwt-cmdlink', async function() {
@@ -175,3 +184,27 @@ document.body.delegateEventListener('click', '.hwt-cmdlink', async function() {
     })
   }
 })
+
+function pagination(content=document.querySelector('.content')) {
+  [].find.call(content.childNodes, node => {
+    let m
+    if (node.nodeName == "#text" && (m = node.textContent.match(/Page ([0-9]+)\/([0-9]+)/)?.slice(1))) {
+      let [current, total] = m.map(n => +n)
+      let html =
+      `<span class="hwt-pagination">
+        ${current > 1 ? 
+          `<span class="hwt-cmdlink hwt-btn" data-command="FIRST">&lt;&lt;</span>
+          <span class="hwt-cmdlink hwt-btn" data-command="PREV">&lt;</span>`
+        :''}
+        ${node.textContent}
+        ${current < total ? 
+          `<span class="hwt-cmdlink hwt-btn" data-command="NEXT">&gt;</span>
+          <span class="hwt-cmdlink hwt-btn" data-command="LAST">&gt;&gt;</span>`
+        :''}
+      </span>`
+      node.replaceWith(createElementFromHTML(html))
+      return true
+    }
+    else return false
+  })
+}
