@@ -84,7 +84,6 @@ function handleIndex() {
   let c = document.querySelector('#content')
   , isLoggedIn = [].find.call(content.childNodes, node => (node.nodeName=="#text" && node.textContent.indexOf('You are logged in')==0))
   , lastBr = c.querySelector('br:last-of-type')
-  console.log(`<div class="hwt-menu" ${!isLoggedIn ? ` class="hwt-guest"` : ''}>`)
   lastBr.insertAdjacentHTML('afterend', `
     <div class="hwt-menu ${!isLoggedIn ? ` hwt-guest` : ''}">
       <span class="hwt-btn hwt-cmdlink hwt-members-only" data-command="BOARDS">boards</span>
@@ -201,11 +200,11 @@ function makeClickable(node, command) {
 document.body.delegateEventListener('click', '.hwt-cmdlink', async function() {
   let command = this.dataset.command
   if (command) {
-    runCommand(command, isPathInView())
+    runCommand(command)
   }
 })
 
-async function runCommand(command, noFrills=isPathInView()) {
+async function runCommand(command, noFrills=!isPathInView()) {
   let cmdLine = document.querySelector('#cmd')
   if (cmdLine) {
     let enter = () => cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
@@ -213,11 +212,11 @@ async function runCommand(command, noFrills=isPathInView()) {
       command = command.split('')
       let ch
       while(ch = command.shift()) {
-        await sleep(20).then(() => {
+        await sleep(15).then(() => {
           cmdLine.value += ch
         })
       }
-      await sleep(300).then(enter)
+      await sleep(150).then(enter)
     }
     else {
       cmdLine.value = command
