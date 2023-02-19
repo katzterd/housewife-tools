@@ -40,7 +40,7 @@ function determineState() {
       handleRoute('topic', content)
     }
     else {
-      handleRoute('board-page', content)
+      handleBoardPage()
     }
   }
   else {
@@ -90,6 +90,14 @@ function handleBoardList() {
   })
 }
 
+function handleBoardPage() {
+  document.querySelectorAll('.postsnumber').forEach(p => {
+    let n = p.textContent.match(/\[(.+)\]/)?.[1]
+    if (n)
+      makeClickable(p, `TOPIC -n ${n}`)
+  })
+}
+
 
 /*---------------------------------- CSS -----------------------------------*/
 var injector = {
@@ -110,7 +118,7 @@ var injector = {
     var head = document.head || document.getElementsByTagName('head')[0]
     if(head)
       head.removeChild(document.getElementById(id))
-  }
+    }
   }
 }
 
@@ -156,7 +164,6 @@ document.body.delegateEventListener('click', '.hwt-cmdlink', async function() {
   , cmdLine = document.querySelector('#cmd')
   if (command && cmdLine) {
     command = command.split('')
-    console.log(command, cmdLine)
     let ch
     while(ch = command.shift()) {
       await sleep(20).then(() => {
