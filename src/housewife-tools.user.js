@@ -27,14 +27,15 @@ function observe(mutationList, observer) {
 }
 MO.observe(document.querySelector('#content'), {subtree: true, childList: true})
 
+
+
 function determineState() {
   let content = document.querySelector('.content')
   if (!content) {
     handleIndex()
     return
   }
-  let headLine = getHeadLine(content)
-  let [m, boardID, boardName, threadID] = headLine[0].textContent.match(/\[([0-9]+)\](?:\s*(.+?)[\s]{2,}\[([0-9]+)\])?/m) || [0,0,0,0]
+  let [m, boardID, boardName, threadID] = parseHeadLine(getHeadLine(content))
   if (m) {
     if (boardName && threadID) {
       handleTopic(content)
@@ -65,6 +66,11 @@ function getHeadLine(content=document.querySelector('.content')) {
   return ret
 }
 
+function parseHeadLine(headLine=getHeadLine(content)) {
+  let headLinePattern = /\[([0-9]+)\](?:\s*(.+?)[\s]{2,}\[([0-9]+)\])?/m
+  return headLine?.[0].textContent.match(headLinePattern) || [0,0,0,0]
+}
+
 determineState() // initial routing
 
 
@@ -92,6 +98,8 @@ function handleBoardList() {
 
 function handleBoardPage(content) {
   pagination(content)
+  getHeadLine(content)[0].previousElementSibling.insertAdjacentHTML('afterend', `
+    <span class="hwt-cmdlink hwt-btn" data-command="BOARDS">^</span>`)
   content.querySelectorAll('.postsnumber').forEach(p => {
     let n = p.textContent.match(/\[(.+)\]/)?.[1]
     if (n)
@@ -101,6 +109,18 @@ function handleBoardPage(content) {
 
 function handleTopic(content) {
   pagination(content)
+  let headLine = getHeadLine(content)
+  let [boardID, boardName, threadID] = parseHeadLine(headLine)?.slice(1)
+  if (boardName!==0) {
+    let html = `<span class="hwt-backlink">
+      <span class="hwt-btn">
+        <span class="hwt-cmdlink" data-command="BOARD -n ${boardID}">&lt; [${boardID}] ${boardName}</span>
+      </span>
+      [${threadID}]
+    </span>`
+    headLine[0].replaceWith(createElementFromHTML(html))
+  }
+  // let allPosts = document.querySelectorAll('.posts')
 }
 
 
@@ -172,25 +192,31 @@ document.body.delegateEventListener('click', '.hwt-cmdlink', async function() {
   let command = this.dataset.command
   , cmdLine = document.querySelector('#cmd')
   if (command && cmdLine) {
-    command = command.split('')
-    let ch
-    while(ch = command.shift()) {
-      await sleep(20).then(() => {
-        cmdLine.value += ch
-      })
+    let enter = () => cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
+    if (isPathInView()) {
+      command = command.split('')
+      let ch
+      while(ch = command.shift()) {
+        await sleep(20).then(() => {
+          cmdLine.value += ch
+        })
+      }
+      await sleep(300).then(enter)
     }
-    await sleep(300).then(() => {
-      cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
-    })
+    else {
+      cmdLine.value = command
+      enter()
+    }
   }
 })
 
 function pagination(content=document.querySelector('.content')) {
-  [].find.call(content.childNodes, node => {
+  let html
+  let found = [].find.call(content.childNodes, node => {
     let m
     if (node.nodeName == "#text" && (m = node.textContent.match(/Page ([0-9]+)\/([0-9]+)/)?.slice(1))) {
       let [current, total] = m.map(n => +n)
-      let html =
+      html =
       `<span class="hwt-pagination">
         ${current > 1 ? 
           `<span class="hwt-cmdlink hwt-btn" data-command="FIRST">&lt;&lt;</span>
@@ -207,4 +233,11 @@ function pagination(content=document.querySelector('.content')) {
     }
     else return false
   })
+  if (found) { // Copy bagination to bottom
+    conent.insertAdjacentHTML('beforeend', html)
+  }
+}
+
+function isPathInView() { // dirty
+  return ((document.querySelector('#path').getBoundingClientRect().bottom - document.querySelector('#wrapper').getBoundingClientRect().bottom) < 96)
 }
