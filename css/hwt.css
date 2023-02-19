@@ -40,3 +40,14 @@
 .hwt-guest .hwt-guests-only {
   display: initial;
 }
+.hwt-btn:focus {
+  outline: #5fbfff;
+  outline-width: thin;
+  outline-style: dotted;
+}
+.hwt-btn:active::before {
+  content: ' [';
+}
+.hwt-btn:active::after {
+  content: '] ';
+}
