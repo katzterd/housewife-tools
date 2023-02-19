@@ -94,7 +94,7 @@ function handleIndex() {
       <span class="hwt-btn hwt-cmdlink hwt-members-only" data-command="LOGOUT">logout</span>
     </div>`)
 }
- 
+
 function handleBoardList() {
   document.querySelectorAll('.pendant').forEach(p => {
     let b = p.previousSibling
@@ -230,7 +230,7 @@ const actions = {}
 
 function makeLoginForm(action='LOGIN') {
   return (() => {
-    document.querySelector('.hwt-login-form').remove()
+    document.querySelector('.hwt-login-form')?.remove()
     document.querySelector('.hwt-menu').insertAdjacentHTML('afterend', `<br>
       <div class="hwt-login-form">
         <div class="hwt-login-login">
@@ -276,12 +276,12 @@ function pagination(content=document.querySelector('.content')) {
       let [current, total] = m.map(n => +n)
       html =
       `<span class="hwt-pagination">
-        ${current > 1 ? 
+        ${current > 1 ?
           `<span class="hwt-cmdlink hwt-btn" data-command="FIRST">&lt;&lt;</span>
           <span class="hwt-cmdlink hwt-btn" data-command="PREV">&lt;</span>`
         :''}
         ${node.textContent}
-        ${current < total ? 
+        ${current < total ?
           `<span class="hwt-cmdlink hwt-btn" data-command="NEXT">&gt;</span>
           <span class="hwt-cmdlink hwt-btn" data-command="LAST">&gt;&gt;</span>`
         :''}
@@ -304,12 +304,16 @@ function handleMessage(type, message) {
   //successful login
   if (type == 'message' && message == 'you are logged in') {
     document.querySelector('.hwt-login-form').remove()
-    document.querySelector('.hwt-menu').classList.remove('hwt-memebers-only')
+    document.querySelector('.hwt-menu').classList.remove('hwt-guest')
   }
   //successful registration -> immediate login
   if (type == 'message' && message == 'you are now registered') {
     let login = document.querySelector('#hwt-login').value
     , password = document.querySelector('#hwt-password').value
     runCommand(`LOGIN -u ${login} -p ${password}`, true)
+  }
+  // Logout
+  if (type == 'message' && message == 'You have been logged out') {
+    document.querySelector('.hwt-menu').classList.add('hwt-guest')
   }
 }
