@@ -18,16 +18,21 @@ function observe(mutationList, observer) {
   for (const mutation of mutationList) {
     // console.log(mutationList)
     if (mutation.type == 'childList' &&
-      mutation.target.id == 'content' &&
-      [].find.call(mutation.addedNodes, i => i?.classList?.contains('content'))
+      mutation.target.id == 'content'
     ) {
-      determineState()
+      if ([].find.call(mutation.addedNodes, i => i?.classList?.contains('content'))) {
+        determineState()
+      }
+      else {
+        let msg = [].find.call(mutation.addedNodes, i => i?.classList?.contains('error') || i?.classList?.contains('message'))
+        if (msg) {
+          handleMessage(msg.className, msg.textContent)
+        }
+      }
     }
   }
 }
 MO.observe(document.querySelector('#content'), {subtree: true, childList: true})
-
-
 
 function determineState() {
   let content = document.querySelector('.content')
@@ -77,12 +82,17 @@ determineState() // initial routing
 /*-------------------------- App state handlers ----------------------------*/
 function handleIndex() {
   let c = document.querySelector('#content')
+  , isLoggedIn = [].find.call(content.childNodes, node => (node.nodeName=="#text" && node.textContent.indexOf('You are logged in')==0))
   , lastBr = c.querySelector('br:last-of-type')
+  console.log(`<div class="hwt-menu" ${!isLoggedIn ? ` class="hwt-guest"` : ''}>`)
   lastBr.insertAdjacentHTML('afterend', `
-    <div class="hwt-menu">
-      <span class="hwt-cmdlink hwt-btn" data-command="BOARDS">boards</span>
-    </div>
-  `)
+    <div class="hwt-menu ${!isLoggedIn ? ` hwt-guest` : ''}">
+      <span class="hwt-btn hwt-cmdlink hwt-members-only" data-command="BOARDS">boards</span>
+      <span class="hwt-btn hwt-action hwt-guests-only" data-action="login">login</span>
+      <span class="hwt-btn hwt-action hwt-guests-only" data-action="register">register</span>
+      <span class="hwt-cmdlink hwt-btn" data-command="HELP">help</span>
+      <span class="hwt-btn hwt-cmdlink hwt-members-only" data-command="LOGOUT">logout</span>
+    </div>`)
 }
  
 function handleBoardList() {
@@ -190,10 +200,16 @@ function makeClickable(node, command) {
 // Auto-inputting commands
 document.body.delegateEventListener('click', '.hwt-cmdlink', async function() {
   let command = this.dataset.command
-  , cmdLine = document.querySelector('#cmd')
-  if (command && cmdLine) {
+  if (command) {
+    runCommand(command, isPathInView())
+  }
+})
+
+async function runCommand(command, noFrills=isPathInView()) {
+  let cmdLine = document.querySelector('#cmd')
+  if (cmdLine) {
     let enter = () => cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
-    if (isPathInView()) {
+    if (!noFrills) {
       command = command.split('')
       let ch
       while(ch = command.shift()) {
@@ -208,6 +224,48 @@ document.body.delegateEventListener('click', '.hwt-cmdlink', async function() {
       enter()
     }
   }
+}
+
+const actions = {}
+
+function makeLoginForm(action='LOGIN') {
+  return (() => {
+    document.querySelector('.hwt-login-form').remove()
+    document.querySelector('.hwt-menu').insertAdjacentHTML('afterend', `<br>
+      <div class="hwt-login-form">
+        <div class="hwt-login-login">
+          <label for="hwt-login">Login:</label>
+          <input type="text" id="hwt-login">
+        </div>
+      </div><br>`)
+    let login = document.querySelector('#hwt-login')
+    login.focus()
+    login.addEventListener('keypress', function(ev) {
+      if (ev.key == 'Enter') {
+        login.insertAdjacentHTML('afterend', `<br>
+          <div class="hwt-login-password">
+            <label for="hwt-password">Password:</label>
+            <input type="password" id="hwt-password">
+          </div>
+        `)
+        let password = document.querySelector('#hwt-password')
+        password.focus()
+        password.addEventListener('keypress', function(ev) {
+          if (ev.key == 'Enter') {
+            runCommand(`${action} -u ${login.value} -p ${password.value}`, true)
+          }
+        })
+      }
+    })
+  })
+}
+
+actions.login = makeLoginForm('login')
+actions.register = makeLoginForm('register')
+
+document.body.delegateEventListener('click', '.hwt-action', /*async*/ function() {
+  let action = this.dataset.action
+  actions[action](this)
 })
 
 function pagination(content=document.querySelector('.content')) {
@@ -240,4 +298,18 @@ function pagination(content=document.querySelector('.content')) {
 
 function isPathInView() { // dirty
   return ((document.querySelector('#path').getBoundingClientRect().bottom - document.querySelector('#wrapper').getBoundingClientRect().bottom) < 96)
+}
+
+function handleMessage(type, message) {
+  //successful login
+  if (type == 'message' && message == 'you are logged in') {
+    document.querySelector('.hwt-login-form').remove()
+    document.querySelector('.hwt-menu').classList.remove('hwt-memebers-only')
+  }
+  //successful registration -> immediate login
+  if (type == 'message' && message == 'you are now registered') {
+    let login = document.querySelector('#hwt-login').value
+    , password = document.querySelector('#hwt-password').value
+    runCommand(`LOGIN -u ${login} -p ${password}`, true)
+  }
 }

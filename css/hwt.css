@@ -7,6 +7,9 @@
 .hwt-btn.hwt-cmdlink {
   text-decoration: none!important;
 }
+.hwt-btn {
+  text-transform: uppercase;
+}
 .hwt-btn:hover {
   background-color: #2F9CC8;
   color: #000;
@@ -16,4 +19,24 @@
 }
 .hwt-btn::after {
   content: ' ]';
+}
+.hwt-login-form input {
+  outline: none;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11pt;
+  color: #5FBFFF;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+  width: calc(100% - 100px);
+}
+.hwt-login-form label {
+  width: 90px;
+  display: inline-block;
+}
+.hwt-guest .hwt-members-only, .hwt-guests-only {
+  display: none;
+}
+.hwt-guest .hwt-guests-only {
+  display: initial;
 }
