@@ -1,9 +1,8 @@
-.hwt-cmdlink {
-  text-transform: uppercase;
+.hwt-cmdlink, .hwt-btn {
   cursor: pointer;
 }
 .hwt-cmdlink:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 .hwt-btn:hover {
   background-color: #2F9CC8;
