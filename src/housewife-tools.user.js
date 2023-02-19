@@ -114,7 +114,7 @@ var injector = {
   }
 }
 
-const hwt_css = GM_getResourceText("baseCSS")
+const baseCSS = GM_getResourceText("baseCSS")
 injector.inject('hwt', baseCSS)
 
 
