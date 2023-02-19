@@ -1,0 +1,14 @@
+.hwt-cmdlink {
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.hwt-btn:hover {
+  background-color: #2F9CC8;
+  color: #000;
+}
+.hwt-btn::before {
+  content: '[ ';
+}
+.hwt-btn::after {
+  content: ' ]';
+}
