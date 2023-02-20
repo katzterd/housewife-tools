@@ -40,13 +40,13 @@ function determineState() {
     handleIndex()
     return
   }
-  let [m, boardID, boardName, threadID] = parseHeadLine(getHeadLine(content))
+  let [m, boardID, boardName, topicID] = parseHeadLine(getHeadLine(content))
   if (m) {
-    if (boardName && threadID) {
-      handleTopic(content)
+    if (boardName && topicID) {
+      handleTopic(content, boardID, boardName, topicID)
     }
     else {
-      handleBoardPage(content)
+      handleBoardPage(content, boardID)
     }
   }
   else {
@@ -76,8 +76,39 @@ function parseHeadLine(headLine=getHeadLine(content)) {
   return headLine?.[0].textContent.match(headLinePattern) || [0,0,0,0]
 }
 
-determineState() // initial routing
+function handleHash(hash) {
+  let [board, boardPage, topic, topicPage] = hash.match(/^#(?:\/([0-9]+|[^\/\:\s]*))?(?:\:([0-9]+|))?(?:\/([0-9]+|))?(?:\:([0-9]+|))?/).slice(1)
+  if (board == 'boards') {
+    runCommand(`BOARDS`, true, false)
+  }
+  else if(!isNaN(+board)) {
+    if (!isNaN(+topic)) {
+      runCommand(`TOPIC -n ${topic}${!isNaN(+topicPage) ? ` -p ${topicPage}` : ''}`, true, false)
+    }
+    else {
+      runCommand(`BOARD -n ${board}${!isNaN(+boardPage) ? ` -p ${boardPage}` : ''}`, true, false)
+    }
+  }
+}
+window.addEventListener('hashchange', ev => {
+  let hash = new URL(ev.newURL)?.hash
+  if (hash) {
+    handleHash(hash)
+  }
+})
 
+if (document.location.hash) {
+  handleHash(document.location.hash)
+}
+else {
+  handleIndex()
+}
+
+var pushNextState = false // runCommand() sets this to true in cases when a command is initiated by hashchange, this prevents pushing a state when unnecessary, preserving navigation
+function pushHistoryState(state, url) {
+  if (pushNextState)
+    window.history.pushState(state, '', url)
+}
 
 /*-------------------------- App state handlers ----------------------------*/
 function handleIndex() {
@@ -95,6 +126,7 @@ function handleIndex() {
 }
 
 function handleBoardList() {
+  window.history.replaceState({page: 'boards'}, '', '#/boards')
   document.querySelectorAll('.pendant').forEach(p => {
     let b = p.previousSibling
     if (b.nodeName!='#text') return;
@@ -105,8 +137,9 @@ function handleBoardList() {
   })
 }
 
-function handleBoardPage(content) {
-  pagination(content)
+function handleBoardPage(content, boardID) {
+  let page = pagination(content)
+  pushHistoryState({page: 'board', board: boardID}, `#/${boardID}:${page}`)
   getHeadLine(content)[0].previousElementSibling.insertAdjacentHTML('afterend', `
     <button class="hwt-cmdlink hwt-btn" data-command="BOARDS">^</button>`)
   content.querySelectorAll('.postsnumber').forEach(p => {
@@ -116,17 +149,15 @@ function handleBoardPage(content) {
   })
 }
 
-function handleTopic(content) {
-  pagination(content)
+function handleTopic(content, boardID, boardName, topicID) {
+  let page = pagination(content)
+  pushHistoryState({page: 'topic', board: boardID, topic: topicID}, `#/${boardID}/${topicID}:${page}`)
   let headLine = getHeadLine(content)
-  let [boardID, boardName, threadID] = parseHeadLine(headLine)?.slice(1)
-  if (boardName!==0) {
-    let html = `<span class="hwt-backlink">
-      <button class="hwt-btn hwt-cmdlink" data-command="BOARD -n ${boardID}">&lt; [${boardID}] ${boardName}</button>
-      [${threadID}]
-    </span>`
-    headLine[0].replaceWith(createElementFromHTML(html))
-  }
+  let html = `<span class="hwt-backlink">
+    <button class="hwt-btn hwt-cmdlink" data-command="BOARD -n ${boardID}">&lt; [${boardID}] ${boardName}</button>
+    [${topicID}]
+  </span>`
+  headLine[0].replaceWith(createElementFromHTML(html))
   // let allPosts = document.querySelectorAll('.posts')
 }
 
@@ -202,9 +233,10 @@ document.body.delegateEventListener(['click', 'input'], '.hwt-cmdlink', async fu
   }
 })
 
-async function runCommand(command, noFrills=!isPathInView()) {
+async function runCommand(command, noFrills=!isPathInView(), pushHistory=true) {
   let cmdLine = document.querySelector('#cmd')
   if (cmdLine) {
+    pushNextState = pushHistory
     let enter = () => cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
     if (!noFrills) {
       command = command.split('')
@@ -268,11 +300,11 @@ document.body.delegateEventListener('click', '.hwt-action', /*async*/ function()
 })
 
 function pagination(content=document.querySelector('.content')) {
-  let html
+  let html, current, total
   let found = [].find.call(content.childNodes, node => {
     let m
     if (node.nodeName == "#text" && (m = node.textContent.match(/Page ([0-9]+)\/([0-9]+)/)?.slice(1))) {
-      let [current, total] = m.map(n => +n)
+      [current, total] = m.map(n => +n)
       html =
       `<span class="hwt-pagination">
         ${current > 1 ?
@@ -291,6 +323,7 @@ function pagination(content=document.querySelector('.content')) {
     else return false
   })
   if (found) { // Copy bagination to bottom
+    return current
     content.insertAdjacentHTML('beforeend', html)
   }
 }
