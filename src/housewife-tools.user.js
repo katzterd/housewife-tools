@@ -54,10 +54,6 @@ function determineState() {
   }
 }
 
-function handleRoute(type) {
-  console.log('route=', type)
-}
-
 function getHeadLine(content=document.querySelector('.content')) {
   let index = 0, ret = []
   for (let node of content.childNodes) {
@@ -127,7 +123,7 @@ function handleIndex() {
 }
 
 function handleBoardList() {
-  window.history.replaceState({page: 'boards'}, '', '#/boards')
+  window.history.replaceState({screen: 'board-list'}, '', '#/boards')
   document.querySelectorAll('.pendant').forEach(p => {
     let b = p.previousSibling
     if (b.nodeName!='#text') return;
@@ -139,8 +135,8 @@ function handleBoardList() {
 }
 
 function handleBoardPage(content, boardID) {
-  let page = pagination(content)
-  pushHistoryState({page: 'board', board: boardID}, `#/${boardID}:${page}`)
+  let [page, lastPage] = pagination(content)
+  pushHistoryState({screen: 'board-page', board: boardID, page: page, lastPage: lastPage}, `#/${boardID}:${page}`)
   getHeadLine(content)[0].previousElementSibling.insertAdjacentHTML('afterend', `
     <button class="hwt-cmdlink hwt-btn" data-command="BOARDS">^</button>`)
   content.querySelectorAll('.postsnumber').forEach(p => {
@@ -151,11 +147,11 @@ function handleBoardPage(content, boardID) {
 }
 
 function handleTopic(content, boardID, boardName, topicID) {
-  let page = pagination(content)
-  pushHistoryState({page: 'topic', board: boardID, topic: topicID}, `#/${boardID}/${topicID}:${page}`)
+  let [page, lastPage] = pagination(content)
+  pushHistoryState({screen: 'topic', board: boardID, topic: topicID, page: page, lastPage: lastPage}, `#/${boardID}/${topicID}:${page}`)
   let headLine = getHeadLine(content)
   let html = `<span class="hwt-backlink">
-    <button class="hwt-btn hwt-cmdlink" data-command="BOARD -n ${boardID}">&lt; [${boardID}] ${boardName}</button>
+    <button class="hwt-btn hwt-cmdlink" data-command="BOARD -n ${boardID}">^ [${boardID}] ${boardName}</button>
     [${topicID}]
   </span>`
   headLine[0].replaceWith(createElementFromHTML(html))
@@ -224,7 +220,7 @@ function createElementFromHTML(htmlString) {
 /*------------------------- App-specific utilities -------------------------*/
 // Turns a text node into a "link"
 function makeClickable(node, command) {
-  node.replaceWith(createElementFromHTML(`<button tabindex="0" class="hwt-cmdlink" data-command="${command}">${node.textContent}</button>`))
+  node.replaceWith(createElementFromHTML(`<button class="hwt-cmdlink" data-command="${command}">${node.textContent}</button>`))
 }
 // Auto-inputting commands
 document.body.delegateEventListener(['click', 'input'], '.hwt-cmdlink', async function() {
@@ -324,7 +320,7 @@ function pagination(content=document.querySelector('.content')) {
     else return false
   })
   if (found) { // Copy bagination to bottom
-    return current
+    return [current, total]
     content.insertAdjacentHTML('beforeend', html)
   }
 }
@@ -349,7 +345,39 @@ function handleMessage(type, message) {
   if (type == 'message' && message == 'You have been logged out') {
     document.querySelector('.hwt-menu').classList.add('hwt-guest')
   }
-}function setLogo() {
+}
+
+// Keyboard navigation
+document.addEventListener("keydown", ev => {
+  if (ev.ctrlKey && ~['board-page','topic'].indexOf(window.history?.state?.screen)) {
+    if (event.key == 'ArrowLeft' && window.history.state.page > 1) {
+      runCommand('PREV')
+    }
+    if (event.key == 'ArrowRight' && window.history.state.page < window.history.state.lastPage) {
+      runCommand('NEXT')
+    }
+    if (event.key == 'ArrowUp') {
+      ev.preventDefault()
+      if (window.history.state.screen == 'board-page') {
+        runCommand('BOARDS')
+      }
+      if (window.history.state.screen == 'topic') {
+        runCommand(`BOARD -n ${window.history.state.board}`)
+      }
+    }
+  }
+  else {
+    let sc = document.querySelector('.scrollcontent')
+    if (event.key == 'PageUp') {
+      sc.scrollTop = 0
+    }
+    if (event.key == 'PageDown') {
+      sc.scrollTop = sc.scrollHeight
+    }
+  }
+})
+
+function setLogo() {
   let ver = 'v.' + GM_info.script.version
   , verSpace = (15 - ver.length)/2
   , verStr = Array(Math.ceil(verSpace)  +1).join(' ') + ver + Array(Math.floor(verSpace)  +1).join(' ')
