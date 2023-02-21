@@ -93,11 +93,10 @@ window.addEventListener('hashchange', ev => {
   }
 })
 
+handleIndex()
+
 if (document.location.hash) {
   handleHash(document.location.hash)
-}
-else {
-  handleIndex()
 }
 
 var pushNextState = false // runCommand() sets this to true in cases when a command is initiated by hashchange, this prevents pushing a state when unnecessary, preserving navigation
