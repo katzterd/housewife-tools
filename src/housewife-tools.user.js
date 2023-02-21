@@ -112,6 +112,7 @@ function pushHistoryState(state, url) {
 
 /*-------------------------- App state handlers ----------------------------*/
 function handleIndex() {
+  setLogo()
   let c = document.querySelector('#content')
   , isLoggedIn = [].find.call(content.childNodes, node => (node.nodeName=="#text" && node.textContent.indexOf('You are logged in')==0))
   , lastBr = c.querySelector('br:last-of-type')
@@ -347,5 +348,24 @@ function handleMessage(type, message) {
   // Logout
   if (type == 'message' && message == 'You have been logged out') {
     document.querySelector('.hwt-menu').classList.add('hwt-guest')
+  }
+}function setLogo() {
+  let ver = 'v.' + GM_info.script.version
+  , verSpace = (15 - ver.length)/2
+  , verStr = Array(Math.ceil(verSpace)  +1).join(' ') + ver + Array(Math.floor(verSpace)  +1).join(' ')
+  , logo = [
+   "        ,---------------.",
+   "    |   |   HouseWife   |",
+   "  --+-- |     Tools     |",
+   "    |   |" +  verStr + "|",
+   "        `---------------'"
+  ].map(line => line.replace(/ /g, ' '))
+  , node = document.querySelector('#content br:nth-of-type(3)')
+  for (let i = 0; i < logo.length; ) {
+    if (node.nodeName == '#text') {
+      node.textContent += logo[i]
+      i++
+    }
+    node = node.nextSibling
   }
 }
