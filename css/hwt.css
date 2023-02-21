@@ -76,7 +76,7 @@
 }
 #hwt-reply-textarea {
   display: inline-block;
-  width: calc(100% - 32px);
+  width: calc(100% - 2ch);
   box-sizing: border-box;
   resize: vertical;
   background: none;
@@ -105,7 +105,7 @@
 .hwt-box-left-border, .hwt-box-right-border {
   height: calc(100% - 32px);
   display: inline-block;
-  width: 16px;
+  width: 1ch;
   overflow-wrap: anywhere;
 }
 .hwt-box-right-border {
