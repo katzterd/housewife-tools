@@ -155,6 +155,7 @@ function handleTopic(content, boardID, boardName, topicID) {
   </span>`
   headLine[0].replaceWith(createElementFromHTML(html))
   // let allPosts = document.querySelectorAll('.posts')
+  makeReplyForm()
 }
 
 
@@ -395,4 +396,67 @@ function setLogo() {
     }
     node = node.nextSibling
   }
+}
+
+function makeReplyForm() {
+  let html = `
+    <div id="hwt-reply-form">
+      <div class="hwt-textarea-container">
+        <div class="hwt-box-top-border"><span></span></div>
+        <div class="hwt-box-left-border"><span></span></div>
+        <textarea id="hwt-reply-textarea"></textarea>
+        <div class="hwt-box-right-border"><span></span></div>
+        <div class="hwt-box-bottom-border"><span></span></div>
+      </div>
+      <div class="hwt-reply-button-container">
+        <button class="hwt-btn hwt-action" data-action="reply">reply</button>
+      </div>
+    </div>`
+  document.querySelector('.content').insertAdjacentHTML('afterend', html)
+  window.requestAnimationFrame(() => {
+    let debounceTimeout;
+    let container = document.querySelector('.hwt-textarea-container')
+    let debouncedResizeHandler = () => {
+      clearTimeout(debounceTimeout)
+      debounceTimeout = setTimeout(() => {
+        fillBoxBorders(container)
+      }, 10)
+    }
+    setTimeout(debouncedResizeHandler, 500)
+    new ResizeObserver(debouncedResizeHandler).observe(document.querySelector('#hwt-reply-form textarea'))
+    window.addEventListener('resize', debouncedResizeHandler)
+  })
+  
+}
+
+function fillBoxBorders(box) {
+  let top = box.querySelector(".hwt-box-top-border")
+  , bottom = box.querySelector(".hwt-box-bottom-border")
+  , left = box.querySelector(".hwt-box-left-border")
+  , right = box.querySelector(".hwt-box-right-border")
+  , topSpan = top.firstChild
+  , bottomSpan = bottom.firstChild
+  , leftSpan = left.firstChild
+  , rightSpan = right.firstChild
+  topSpan.textContent = bottomSpan.textContent = leftSpan.textContent = rightSpan.textContent = ''
+
+  let charWidth = topSpan.offsetWidth / 2
+  let charHeight = topSpan.offsetHeight
+  window.requestAnimationFrame(() => {
+    let addChars = Math.round((top.offsetWidth - topSpan.offsetWidth) / charWidth)
+    topSpan.textContent = Array(addChars  +1).join('-')
+    bottomSpan.textContent = topSpan.textContent
+
+    let textArea = box.querySelector('textarea')
+    let textAreaHeight = textArea.offsetHeight
+    addChars = Math.round(textArea.offsetHeight / charHeight)
+    leftSpan.textContent = Array(addChars  +1).join('|')
+    rightSpan.textContent = leftSpan.textContent
+  })
+}
+
+actions.reply = function() {
+  let text = document.querySelector('#hwt-reply-textarea')?.value
+  if (text)
+    runCommand(`REPLY -m ${text}`, true)
 }

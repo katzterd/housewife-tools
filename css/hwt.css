@@ -108,9 +108,6 @@
   width: 1ch;
   overflow-wrap: anywhere;
 }
-.hwt-box-right-border {
-  text-align: center;
-}
 .hwt-box-top-border, .hwt-box-bottom-border,
 .hwt-box-left-border, .hwt-box-right-border {
   overflow: hidden;
