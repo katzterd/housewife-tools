@@ -375,6 +375,12 @@ document.addEventListener("keydown", ev => {
         runCommand(`BOARD -n ${window.history.state.board}`)
       }
     }
+    if (ev.key == 'Enter' && ~document.activeElement.id.indexOf('hwt-pf')) {
+      if(document.querySelector('#hwt-pf-title'))
+        actions.newtopic()
+      else
+        actions.reply()
+    }
   }
   else {
     let sc = document.querySelector('.scrollcontent')
@@ -413,8 +419,8 @@ function makePostingForm(withTitle = false) {
     <div id="hwt-posting-form" style="visibility:hidden">
       <div class="hwt-textarea-wrapper${withTitle ? ' hwt-tc-with-title' :''}">
         <div class="hwt-textarea-border"></div>
-        ${withTitle ? `<input type="text" class="hwt-txt-input hwt-title-input" placeholder="Title...">` :''}
-        <textarea style="resize:false" rows="3" class="hwt-txt-input hwt-msg-area"${withTitle ? ` placeholder="Message..."` :''}></textarea>
+        ${withTitle ? `<input id="hwt-pf-title" type="text" class="hwt-txt-input hwt-title-input" placeholder="Title...">` :''}
+        <textarea id="hwt-pf-textarea" style="resize:false" rows="3" class="hwt-txt-input hwt-msg-area"${withTitle ? ` placeholder="Message..."` :''}></textarea>
       </div>
       <div class="hwt-reply-button-wrapper">
         ${withTitle
@@ -484,18 +490,18 @@ function makePostingForm(withTitle = false) {
   })
 }
 
-actions.reply = function() {
-  let msg = document.querySelector('.hwt-msg-area')?.value
+actions.reply = () => {
+  let msg = document.querySelector('#hwt-pf-textarea')?.value
   if (msg)
     runCommand(`REPLY -m ${msg}`, true)
 }
-actions.newtopic = function() {
-  let title = document.querySelector('.hwt-title-input')?.value
-  , content = document.querySelector('.hwt-msg-area')?.value
+actions.newtopic = () => {
+  let title = document.querySelector('#hwt-pf-title')?.value
+  , content = document.querySelector('#hwt-pf-textarea')?.value
   if (title && text)
     runCommand(`NEWTOPIC -t ${title} -c ${content}`, true)
 }
-actions.newtopicform = function() {
+actions.newtopicform = () => {
   document.querySelector('.show-topic-form')?.remove()
   makePostingForm(true)
 }
