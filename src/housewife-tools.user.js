@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://www.0chan.pl/userjs/
-// @version      0.0.0
+// @version      1.0.0
 // @description  UX extension for 314n.org
 // @updateURL    https://github.com/juribiyan/0chan-utilities/raw/master/src/housewife-tools.meta.js
 // @author       Snivy
@@ -360,13 +360,13 @@ function handleMessage(type, message) {
 // Keyboard navigation
 document.addEventListener("keydown", ev => {
   if (ev.ctrlKey && ~['board-page','topic'].indexOf(window.history?.state?.screen)) {
-    if (event.key == 'ArrowLeft' && window.history.state.page > 1) {
+    if (ev.key == 'ArrowLeft' && window.history.state.page > 1) {
       runCommand('PREV')
     }
-    if (event.key == 'ArrowRight' && window.history.state.page < window.history.state.lastPage) {
+    if (ev.key == 'ArrowRight' && window.history.state.page < window.history.state.lastPage) {
       runCommand('NEXT')
     }
-    if (event.key == 'ArrowUp') {
+    if (ev.key == 'ArrowUp') {
       ev.preventDefault()
       if (window.history.state.screen == 'board-page') {
         runCommand('BOARDS')
@@ -378,10 +378,10 @@ document.addEventListener("keydown", ev => {
   }
   else {
     let sc = document.querySelector('.scrollcontent')
-    if (event.key == 'PageUp') {
+    if (ev.key == 'PageUp') {
       sc.scrollTop = 0
     }
-    if (event.key == 'PageDown') {
+    if (ev.key == 'PageDown') {
       sc.scrollTop = sc.scrollHeight
     }
   }
