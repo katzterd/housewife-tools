@@ -111,3 +111,30 @@
   max-width: 500px;
   text-align: center;
 }
+
+.hwt-blurred {
+  pointer-events: none;
+}
+.hwt-blurred #scrollTest {
+  filter: blur(2px);
+  transform: scale(1.1);
+  opacity: 0;
+  transition: filter .5s, transform .5s, opacity .5s;
+}
+.hwt-loading-animation {
+  position: absolute;
+  color: #5fbfff;
+  font-family: "Courier New", Courier, monospace;
+  letter-spacing: -0.3ch;
+  font-size: 16px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.hwt-blurred .hwt-loading-animation {
+  opacity: 1;
+  transition: opacity .4s .1s;
+}

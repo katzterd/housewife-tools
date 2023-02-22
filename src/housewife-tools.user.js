@@ -36,6 +36,7 @@ function observe(mutationList, observer) {
 MO.observe(document.querySelector('#content'), {subtree: true, childList: true})
 
 function determineState() {
+  setBlur(0)
   let content = document.querySelector('.content')
   if (!content) {
     handleIndex()
@@ -226,6 +227,18 @@ function repeatString(char, times) {
   return new Array(times+1).join(char)
 }
 
+function randomIntBetween(min = 0, max = 100) {
+  // find diff
+  let difference = max - min;
+  // generate random number 
+  let rand = Math.random();
+  // multiply with difference 
+  rand = Math.floor( rand * difference);
+  // add with min value 
+  rand = rand + min;
+  return rand;
+}
+
 
 /*------------------------- App-specific utilities -------------------------*/
 // Turns a text node into a "link"
@@ -244,7 +257,10 @@ async function runCommand(command, noFrills=!isPathInView(), pushHistory=true) {
   let cmdLine = document.querySelector('#cmd')
   if (cmdLine) {
     pushNextState = pushHistory
-    let enter = () => cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
+    let enter = () => {
+      cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
+      setBlur(true)
+    }
     if (!noFrills) {
       command = command.split('')
       let ch
@@ -505,3 +521,44 @@ actions.newtopicform = () => {
   document.querySelector('.show-topic-form')?.remove()
   makePostingForm(true)
 }
+
+var animationRun;
+
+function setBlur(toggle=true) {
+  let wr = document.querySelector('#wrapper')
+  if (toggle) {
+    wr.classList.add('hwt-blurred')
+    startAnimation()
+  }
+  else {
+    wr.classList.remove('hwt-blurred')
+    setTimeout(() => clearInterval(animationRun), 210)
+  }
+}
+
+function startAnimation(speed=40, size=6) {
+  let loader
+  while (!(loader = document.querySelector('.hwt-loading-animation'))) {
+    document.querySelector('#wrapper').insertAdjacentHTML('afterbegin', '<div class="hwt-loading-animation"></div>')
+  }
+  let makeLine = function() {
+    let line = ''
+    for(let i=0; i<(size*2); i++) {
+      line += String.fromCharCode(randomIntBetween(0x2800, 0x28ff)) // Braille block
+    }
+    return line + '<br>'
+  }
+  let lines = []
+  for(let i=0; i<size; i++) {
+    lines.push(makeLine())
+  }
+  loader.innerHTML = lines.join('')
+
+  animationRun = setInterval(() => {
+    lines.shift()
+    lines.push(makeLine())
+    loader.innerHTML = lines.join('')
+  }, speed)
+}
+
+
