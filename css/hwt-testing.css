@@ -103,7 +103,6 @@
   position: absolute;
   user-select: none;
 }
-.textarea-wrapper textarea::placeholder, 
-.textarea-wrapper input[type=text]::placeholder {
+.hwt-txt-input::placeholder {
   color: #00d7ff7d;
 }
