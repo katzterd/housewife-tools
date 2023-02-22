@@ -6,6 +6,7 @@
 // @updateURL    https://github.com/juribiyan/0chan-utilities/raw/master/src/housewife-tools.meta.js
 // @author       Snivy
 // @include      https://314n.org/*
+// @include      https://314n.ru/*
 // @grant        GM_getResourceText
 // @icon         https://raw.githubusercontent.com/juribiyan/housewife-tools/master/icon.png
 // @resource     baseCSS https://raw.githubusercontent.com/Juribiyan/housewife-tools/master/css/hwt.css
@@ -143,6 +144,10 @@ function handleBoardPage(content, boardID) {
     if (n)
       makeClickable(p, `TOPIC -n ${n}`)
   })
+  content.insertAdjacentHTML('beforeend',
+    `<div class="show-topic-form">
+      <button class="hwt-action hwt-btn" data-action="newtopicform">new topic</button>
+    </div>`)
 }
 
 function handleTopic(content, boardID, boardName, topicID) {
@@ -155,7 +160,7 @@ function handleTopic(content, boardID, boardName, topicID) {
   </span>`
   headLine[0].replaceWith(createElementFromHTML(html))
   // let allPosts = document.querySelectorAll('.posts')
-  makeReplyForm()
+  makePostingForm()
 }
 
 
@@ -214,6 +219,11 @@ function createElementFromHTML(htmlString) {
 
   // Change this to div.childNodes to support multiple top-level nodes.
   return div.firstChild;
+}
+
+function repeatString(char, times) {
+  if (times <= 0) return "";
+  return new Array(times+1).join(char)
 }
 
 
@@ -380,7 +390,7 @@ document.addEventListener("keydown", ev => {
 function setLogo() {
   let ver = 'v.' + GM_info.script.version
   , verSpace = (15 - ver.length)/2
-  , verStr = Array(Math.ceil(verSpace)  +1).join(' ') + ver + Array(Math.floor(verSpace)  +1).join(' ')
+  , verStr = repeatString(' ', Math.ceil(verSpace)) + ver + repeatString(' ', Math.floor(verSpace))
   , logo = [
    "        ,---------------.",
    "    |   |   HouseWife   |",
@@ -398,65 +408,94 @@ function setLogo() {
   }
 }
 
-function makeReplyForm() {
+function makePostingForm(withTitle = false) {
   let html = `
-    <div id="hwt-reply-form">
-      <div class="hwt-textarea-container">
-        <div class="hwt-box-top-border"><span></span></div>
-        <div class="hwt-box-left-border"><span></span></div>
-        <textarea id="hwt-reply-textarea"></textarea>
-        <div class="hwt-box-right-border"><span></span></div>
-        <div class="hwt-box-bottom-border"><span></span></div>
+    <div id="hwt-posting-form" style="visibility:hidden">
+      <div class="hwt-textarea-wrapper${withTitle ? ' hwt-tc-with-title' :''}">
+        <div class="hwt-textarea-border"></div>
+        ${withTitle ? `<input type="text" class="hwt-txt-input hwt-title-input" placeholder="Title...">` :''}
+        <textarea style="resize:false" rows="3" class="hwt-txt-input hwt-msg-area"${withTitle ? ` placeholder="Message..."` :''}></textarea>
       </div>
-      <div class="hwt-reply-button-container">
-        <button class="hwt-btn hwt-action" data-action="reply">reply</button>
+      <div class="hwt-reply-button-wrapper">
+        ${withTitle
+          ? `<button class="hwt-btn hwt-action" data-action="newtopic">post</button>`
+          : `<button class="hwt-btn hwt-action" data-action="reply">reply</button>`
+        }
       </div>
     </div>`
   document.querySelector('.content').insertAdjacentHTML('afterend', html)
-  window.requestAnimationFrame(() => {
-    let debounceTimeout;
-    let container = document.querySelector('.hwt-textarea-container')
-    let debouncedResizeHandler = () => {
-      clearTimeout(debounceTimeout)
-      debounceTimeout = setTimeout(() => {
-        fillBoxBorders(container)
-      }, 10)
-    }
-    setTimeout(debouncedResizeHandler, 500)
-    new ResizeObserver(debouncedResizeHandler).observe(document.querySelector('#hwt-reply-form textarea'))
-    window.addEventListener('resize', debouncedResizeHandler)
-  })
+
+  let form = document.querySelector('#hwt-posting-form')
+  , wr = form.querySelector('.hwt-textarea-wrapper')
+  , border = wr.querySelector('.hwt-textarea-border')
+  , textarea = wr.querySelector('textarea')
   
-}
+  let updateBorders = () => {
+    // Determine the character dimensions
+    border.textContent = repeatString("-", 10) // for better subpixel precision in Chrome
+    let charWidth = border.offsetWidth / 10
+    , charHeight = border.offsetHeight
 
-function fillBoxBorders(box) {
-  let top = box.querySelector(".hwt-box-top-border")
-  , bottom = box.querySelector(".hwt-box-bottom-border")
-  , left = box.querySelector(".hwt-box-left-border")
-  , right = box.querySelector(".hwt-box-right-border")
-  , topSpan = top.firstChild
-  , bottomSpan = bottom.firstChild
-  , leftSpan = left.firstChild
-  , rightSpan = right.firstChild
-  topSpan.textContent = bottomSpan.textContent = leftSpan.textContent = rightSpan.textContent = ''
+    injector.inject('hwt-postingform-margins', `
+      .hwt-textarea-wrapper .hwt-txt-input {
+        border-width: ${charHeight}px ${charWidth*2}px
+      }
+      ${withTitle ? `.hwt-msg-area {
+        border-top-width: 0!important;
+      }` :''}`
+    )
 
-  let charWidth = topSpan.offsetWidth / 2
-  let charHeight = topSpan.offsetHeight
-  window.requestAnimationFrame(() => {
-    let addChars = Math.round((top.offsetWidth - topSpan.offsetWidth) / charWidth)
-    topSpan.textContent = Array(addChars  +1).join('-')
-    bottomSpan.textContent = topSpan.textContent
+    let w = Math.floor(wr.offsetWidth / charWidth)
+    , h = Math.round(wr.offsetHeight / charHeight)
 
-    let textArea = box.querySelector('textarea')
-    let textAreaHeight = textArea.offsetHeight
-    addChars = Math.round(textArea.offsetHeight / charHeight)
-    leftSpan.textContent = Array(addChars  +1).join('|')
-    rightSpan.textContent = leftSpan.textContent
+    let head = "," + repeatString("–", w-2) + ".<br>"
+    , line = "|" + repeatString("&nbsp;", w-2) + "|<br>"
+    , tail = "`" + repeatString("–", w-2) + "'"
+
+    if (!withTitle) {
+      border.innerHTML = head + repeatString(line, h-2) + tail
+    }
+    else {
+      let divider = "}" + repeatString("-", w-2) + "{<br>"
+      border.innerHTML = head + line + divider + repeatString(line, h-4) + tail
+    }
+  }
+  let debounceTimeout;
+  let debouncedResizeHandler = (ev) => {
+    clearTimeout(debounceTimeout)
+    debounceTimeout = setTimeout(() => {
+      if (!form.parentNode) {
+        ro.disconnect()
+        return;
+      }
+      updateBorders()
+    }, 10)
+  }
+  let ro = new ResizeObserver(debouncedResizeHandler)
+  setTimeout(() => {
+    window.requestAnimationFrame(() => {
+      debouncedResizeHandler()
+      ro.observe(textarea)
+      form.style.visibility = 'visible'
+    })
+  }, 200)
+  textarea.addEventListener("input", ev => {
+    textarea.rows = Math.max(textarea.value.split(/\n/).length, 3)
   })
 }
 
 actions.reply = function() {
-  let text = document.querySelector('#hwt-reply-textarea')?.value
-  if (text)
-    runCommand(`REPLY -m ${text}`, true)
+  let msg = document.querySelector('.hwt-msg-area')?.value
+  if (msg)
+    runCommand(`REPLY -m ${msg}`, true)
+}
+actions.newtopic = function() {
+  let title = document.querySelector('.hwt-title-input')?.value
+  , content = document.querySelector('.hwt-msg-area')?.value
+  if (title && text)
+    runCommand(`NEWTOPIC -t ${title} -c ${content}`, true)
+}
+actions.newtopicform = function() {
+  document.querySelector('.show-topic-form')?.remove()
+  makePostingForm(true)
 }
