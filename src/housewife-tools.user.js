@@ -254,7 +254,7 @@ document.body.delegateEventListener(['click', 'input'], '.hwt-cmdlink', async fu
   }
 })
 
-async function runCommand(command, noFrills=!isPathInView(), pushHistory=true) {
+async function runCommand(command, noFrills=!isPathInView(), pushHistory=true, noLoad=false) {
   let cmdLine = document.querySelector('#cmd')
   if (cmdLine) {
     pushNextState = pushHistory
