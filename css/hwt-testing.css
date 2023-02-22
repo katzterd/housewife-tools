@@ -1,0 +1,107 @@
+.hwt-cmdlink, .hwt-btn {
+  cursor: pointer;
+  font-family: inherit;
+  background: inherit;
+  color: inherit;
+  border: inherit;
+}
+.hwt-cmdlink:hover {
+  text-decoration: underline;
+}
+.hwt-btn.hwt-cmdlink {
+  text-decoration: none!important;
+}
+.hwt-btn {
+  text-transform: uppercase;
+}
+.hwt-btn:hover {
+  background-color: #2F9CC8;
+  color: #000;
+}
+.hwt-btn::before {
+  content: '[ ';
+}
+.hwt-btn::after {
+  content: ' ]';
+}
+.hwt-login-form input {
+  outline: none;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11pt;
+  color: #5FBFFF;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+  width: calc(100% - 100px);
+}
+.hwt-login-form label {
+  width: 90px;
+  display: inline-block;
+}
+.hwt-guest .hwt-members-only, .hwt-guests-only {
+  display: none;
+}
+.hwt-guest .hwt-guests-only {
+  display: initial;
+}
+.hwt-btn:focus, .hwt-cmdlink:focus {
+  outline: #5fbfff;
+  outline-width: thin;
+  outline-style: dotted;
+}
+.hwt-btn:active::before {
+  content: ' [';
+}
+.hwt-btn:active::after {
+  content: '] ';
+}
+
+#hwt-posting-form {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+.hwt-reply-button-wrapper {
+  width: 100px;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.hwt-textarea-wrapper {
+  flex-grow: 1;
+/*  display: flex;*/
+/*  flex-direction: row;*/
+/*  flex-wrap: wrap;*/
+}
+.hwt-txt-input {
+  font-family: monospace;
+  box-sizing: border-box;
+  position: relative;
+  background: none;
+  border: none;
+  outline: none;
+  color: inherit;
+  padding: 0;
+}
+.hwt-textarea-wrapper .hwt-txt-input {
+  width: 100%;
+  border-width: 0;
+  border-style: solid;
+  border-color: transparent;
+}
+
+.hwt-txt-input, 
+.hwt-textarea-border {
+  font-family: monospace;
+  font-size: 11pt;
+}
+.hwt-textarea-border {
+  position: absolute;
+  user-select: none;
+}
+.textarea-wrapper textarea::placeholder, 
+.textarea-wrapper input[type=text]::placeholder {
+  color: #00d7ff7d;
+}
