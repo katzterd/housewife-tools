@@ -100,6 +100,7 @@
 .hwt-textarea-border {
   font-family: monospace;
   font-size: 11pt;
+  line-height: 1.3em;
 }
 .hwt-textarea-border {
   position: absolute;
