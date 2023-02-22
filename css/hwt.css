@@ -60,6 +60,7 @@
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
+  max-width: 960px;
 }
 .hwt-reply-button-wrapper {
   width: 100px;
@@ -71,9 +72,10 @@
 }
 .hwt-textarea-wrapper {
   flex-grow: 1;
-/*  display: flex;*/
-/*  flex-direction: row;*/
-/*  flex-wrap: wrap;*/
+}
+.hwt-msg-area {
+  max-height: 50vh;
+  resize: none;
 }
 .hwt-txt-input {
   font-family: monospace;
@@ -96,12 +98,17 @@
 .hwt-textarea-border {
   font-family: monospace;
   font-size: 11pt;
+  line-height: 1.3em;
 }
 .hwt-textarea-border {
   position: absolute;
   user-select: none;
 }
-.textarea-wrapper textarea::placeholder, 
-.textarea-wrapper input[type=text]::placeholder {
-  color: #00d7ff7d;
+.hwt-txt-input::placeholder {
+  color: inherit;
+  opacity: .5;
+}
+.show-topic-form {
+  max-width: 500px;
+  text-align: center;
 }
