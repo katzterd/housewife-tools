@@ -117,9 +117,9 @@ function handleIndex() {
     <div class="hwt-menu ${!isLoggedIn ? ` hwt-guest` : ''}">
       <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="BOARDS">boards</button>
       <button class="hwt-btn hwt-action hwt-guests-only" data-action="login">login</button>
-      <button class="hwt-btn hwt-action hwt-guests-only" data-action="register">register</button>
-      <button class="hwt-cmdlink hwt-btn" data-command="HELP">help</button>
-      <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="LOGOUT">logout</button>
+      <button class="hwt-btn hwt-action hwt-guests-only" data-action="register" >register</button>
+      <button class="hwt-cmdlink hwt-btn" data-command="HELP" data-noload="true">help</button>
+      <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="LOGOUT" data-noload="true">logout</button>
     </div>`)
 }
 
@@ -248,8 +248,9 @@ function makeClickable(node, command) {
 // Auto-inputting commands
 document.body.delegateEventListener(['click', 'input'], '.hwt-cmdlink', async function() {
   let command = this.dataset.command
+  let noLoad = this.dataset?.noload
   if (command) {
-    runCommand(command)
+    runCommand(command, !isPathInView(), true, noLoad)
   }
 })
 
@@ -259,7 +260,8 @@ async function runCommand(command, noFrills=!isPathInView(), pushHistory=true) {
     pushNextState = pushHistory
     let enter = () => {
       cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
-      setBlur(true)
+      if (!noLoad)
+        setBlur(true)
     }
     if (!noFrills) {
       command = command.split('')
