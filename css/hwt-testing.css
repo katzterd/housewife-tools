@@ -104,5 +104,6 @@
   user-select: none;
 }
 .hwt-txt-input::placeholder {
-  color: #00d7ff7d;
+  color: inherit;
+  opacity: .5;
 }
