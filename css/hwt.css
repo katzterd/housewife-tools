@@ -78,7 +78,6 @@
   resize: none;
 }
 .hwt-txt-input {
-  font-family: monospace;
   box-sizing: border-box;
   position: relative;
   background: none;
@@ -96,7 +95,7 @@
 
 .hwt-txt-input, 
 .hwt-textarea-border {
-  font-family: monospace;
+  font-family: inherit;
   font-size: 11pt;
   line-height: 1.3em;
 }
