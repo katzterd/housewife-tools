@@ -71,13 +71,10 @@
 }
 .hwt-textarea-wrapper {
   flex-grow: 1;
-/*  display: flex;*/
-/*  flex-direction: row;*/
-/*  flex-wrap: wrap;*/
 }
 .hwt-msg-area {
   max-height: 50vh;
-  resize: vertical;
+  resize: none;
 }
 .hwt-txt-input {
   font-family: monospace;
