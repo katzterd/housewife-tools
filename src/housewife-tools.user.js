@@ -357,15 +357,15 @@ function pagination(content=document.querySelector('.content')) {
     }
     else return false
   })
-  if (found) { // Copy bagination to bottom
-    return [current, total]
+  if (found) { // Copy pagination to bottom
     content.insertAdjacentHTML('beforeend', html)
+    return [current, total]
   }
 }
 
-function isPathInView() { // dirty
+/*function isPathInView() { // dirty
   return ((document.querySelector('#path').getBoundingClientRect().bottom - document.querySelector('#wrapper').getBoundingClientRect().bottom) < 96)
-}
+}*/
 
 function handleMessage(type, message) {
   //successful login
