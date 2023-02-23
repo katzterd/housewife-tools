@@ -87,17 +87,33 @@ function parseHeadLine(headLine=getHeadLine(content)) {
   return headLine?.[0].textContent.match(headLinePattern) || [0,0,0,0]
 }
 
+var actions = {}
+
+actions.home = async function(pushHistory=true) {
+  setBlur(1)
+  let res = await fetch(`/`)
+  if (! res.ok) return;
+  let htm = await res.text()
+  if (!htm) return;
+  let dom = document.createRange().createContextualFragment(htm)
+  let c = dom.querySelector('#content')
+  document.querySelector('#content').replaceWith(c)
+  if (pushHistory)
+    pushHistoryState({screen: 'index'}, '#/')
+  handleIndex()
+  setBlur(0)
+  reObserve()
+}
+
 function handleHash(hash) {
+  console.log('hash=', hash)
   if (!hash) {
-    actions.home()
+    actions.home(false)
     return;
   }
   let [board, boardPage, topic, topicPage] = hash.match(/^#(?:\/([0-9]+|[^\/\:\s]*))?(?:\:([0-9]+|))?(?:\/([0-9]+|))?(?:\:([0-9]+|))?/).slice(1)
-  if (board == 'boards') {
-    runCommand(`BOARDS`, {skipHistory: true})
-  }
-  if (board == 'rvt') {
-    runCommand(`RVT`, {skipHistory: true})
+  if (board == '') {
+    actions.home(false)
   }
   else if(!isNaN(+board)) {
     if (!isNaN(+topic)) {
@@ -106,6 +122,12 @@ function handleHash(hash) {
     else {
       runCommand(`BOARD -n ${board}${!isNaN(+boardPage) ? ` -p ${boardPage}` : ''}`, {skipHistory: true})
     }
+  }
+  else if (board == 'boards') {
+    runCommand(`BOARDS`, {skipHistory: true})
+  }
+  else if (board == 'rvt') {
+    runCommand(`RVT`, {skipHistory: true})
   }
   else {
     console.error('Unhandled hash:', hash)
@@ -145,7 +167,10 @@ function handleIndex() {
       <button class="hwt-btn hwt-cmdlink" data-command="HELP" data-noload="true">help</button>
       <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="LOGOUT" data-noload="true">logout</button>
       <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="RVT" title="Recent viewed topics">recent</button>
-    </div>`)
+      <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="INVITES" data-noload="true">invites</button>
+      <button class="hwt-btn hwt-cmdlink" data-command="DONATE" data-noload="true">donate</button>
+      <button class="hwt-btn hwt-action" data-action="hwtinfo" title="About this UserScript">hwt</button>
+    </div><br>`)
 }
 
 function handleBoardList(content) {
@@ -208,7 +233,6 @@ function handleTopic(content, boardID, boardName, topicID) {
   // let allPosts = document.querySelectorAll('.posts')
   makePostingForm()
 }
-
 
 /*---------------------------------- CSS -----------------------------------*/
 var injector = {
@@ -325,8 +349,6 @@ async function runCommand(command, {load = true, skipHistory = false} = {}) {
   if (load)
     setBlur(1)
 }
-
-const actions = {}
 
 function makeLoginForm(action='LOGIN') {
   return (() => {
@@ -612,16 +634,20 @@ function startAnimation(speed=40, size=6) {
   }, speed)
 }
 
-actions.home = async() => {
-  setBlur(1)
-  let res = await fetch(`/`)
-  if (! res.ok) return;
-  let htm = await res.text()
-  if (!htm) return;
-  let dom = document.createRange().createContextualFragment(htm)
-  let c = dom.querySelector('#content')
-  document.querySelector('#content').replaceWith(c)
-  handleIndex()
-  setBlur(0)
-  reObserve()
+actions.hwtinfo = () => {
+  let r = str => `<span class="reverse">&nbsp;${str}&nbsp;</span>`
+  , d2 = str => `<div style="padding:2px">${str}</div>`
+  let msg = `<div class="message"><div style="padding-left:10px">
+    <br>
+    ${r(`HouseWife Tools v.${GM_info.script.version}`)}
+    <br><br>
+    Keyboard Shortcuts:<br><br>
+    ${d2(`${r(`Ctrl + →`)}, ${r(`Ctrl + ←`)} Navigate between pages`)}
+    ${d2(`${r(`Ctrl + ↑`)} Move up one layer`)}
+    ${d2(`${r(`PageUp`)}, ${r(`PageDown`)} Scroll up and down the page`)}
+    ${d2(`${r(`Ctrl + Enter`)} Submit a post`)}
+    <br><br>
+    <a href="https://github.com/Juribiyan/housewife-tools">Project GitHub</a>
+  </div></div>`
+  document.querySelector('#content').insertAdjacentHTML('beforeend', msg)
 }
