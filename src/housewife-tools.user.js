@@ -32,7 +32,10 @@ function observe(mutationList, observer) {
     }
   }
 }
-MO.observe(document.querySelector('#content'), {subtree: true, childList: true})
+function reObserve() {
+  MO.observe(document.querySelector('#content'), {subtree: true, childList: true})
+}
+reObserve()
 
 function determineState() {
   setBlur(0)
@@ -55,7 +58,7 @@ function determineState() {
     }
   }
   else {
-    handleBoardList()
+    handleBoardList(content)
   }
 }
 
@@ -78,6 +81,10 @@ function parseHeadLine(headLine=getHeadLine(content)) {
 }
 
 function handleHash(hash) {
+  if (!hash) {
+    actions.home()
+    return;
+  }
   let [board, boardPage, topic, topicPage] = hash.match(/^#(?:\/([0-9]+|[^\/\:\s]*))?(?:\:([0-9]+|))?(?:\/([0-9]+|))?(?:\:([0-9]+|))?/).slice(1)
   if (board == 'boards') {
     runCommand(`BOARDS`, {skipHistory: true})
@@ -90,12 +97,12 @@ function handleHash(hash) {
       runCommand(`BOARD -n ${board}${!isNaN(+boardPage) ? ` -p ${boardPage}` : ''}`, {skipHistory: true})
     }
   }
+  else {
+    console.error('Unhandled hash:', hash)
+  }
 }
 window.addEventListener('hashchange', ev => {
-  let hash = new URL(ev.newURL)?.hash
-  if (hash) {
-    handleHash(hash)
-  }
+  handleHash(new URL(ev.newURL)?.hash)
 })
 
 handleIndex()
@@ -111,6 +118,7 @@ function pushHistoryState(state, url) {                  // this prevents pushin
   }
   else {
     window.history.pushState(state, '', url)
+    console.log('pushed:', state)
   }
 }
 
@@ -130,9 +138,9 @@ function handleIndex() {
     </div>`)
 }
 
-function handleBoardList() {
-  window.history.replaceState({screen: 'board-list'}, '', '#/boards')
-  document.querySelectorAll('.pendant').forEach(p => {
+function handleBoardList(content) {
+  pushHistoryState({screen: 'board-list'}, '#/boards')
+  content.querySelectorAll('.pendant').forEach(p => {
     let b = p.previousSibling
     if (b.nodeName!='#text') return;
     let n = b.textContent.match(/^\[([0-9]+)\]/)?.[1]
@@ -140,6 +148,8 @@ function handleBoardList() {
       makeClickable(b, `BOARD -n ${n}`)
     }
   })
+  getHeadLine(content)[0].previousElementSibling.insertAdjacentHTML('afterend', `
+    <button class="hwt-action hwt-btn" data-action="home">⌂</button> `)
 }
 
 function handleBoardPage(content, boardID) {
@@ -287,7 +297,7 @@ async function runCommand(command, {load = true, skipHistory = false} = {}) {
   cmdLine.value = thisCommand
   cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
   if (load)
-    setBlur(true)
+    setBlur(1)
 }
 
 const actions = {}
@@ -358,7 +368,7 @@ function pagination(content=document.querySelector('.content')) {
     else return false
   })
   if (found) { // Copy pagination to bottom
-    content.insertAdjacentHTML('beforeend', html)
+    content.insertAdjacentHTML('beforeend', '<br>'+html)
     return [current, total]
   }
 }
@@ -387,7 +397,7 @@ function handleMessage(type, message) {
 
 // Keyboard navigation
 document.addEventListener("keydown", ev => {
-  if (ev.ctrlKey && ~['board-page','topic'].indexOf(window.history?.state?.screen)) {
+  if (ev.ctrlKey) {
     if (ev.key == 'ArrowLeft' && window.history.state.page > 1) {
       runCommand('PREV')
     }
@@ -401,6 +411,9 @@ document.addEventListener("keydown", ev => {
       }
       if (window.history.state.screen == 'topic') {
         runCommand(`BOARD -n ${window.history.state.board}`)
+      }
+      if (window.history.state.screen == 'board-list') {
+        actions.home()
       }
     }
     if (ev.key == 'Enter' && ~document.activeElement.id.indexOf('hwt-pf')) {
@@ -573,4 +586,16 @@ function startAnimation(speed=40, size=6) {
   }, speed)
 }
 
-
+actions.home = async() => {
+  setBlur(1)
+  let res = await fetch(`/`)
+  if (! res.ok) return;
+  let htm = await res.text()
+  if (!htm) return;
+  let dom = document.createRange().createContextualFragment(htm)
+  let c = dom.querySelector('#content')
+  document.querySelector('#content').replaceWith(c)
+  handleIndex()
+  setBlur(0)
+  reObserve()
+}
