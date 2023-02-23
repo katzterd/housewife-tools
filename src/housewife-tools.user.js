@@ -149,19 +149,20 @@ function handleBoardList(content) {
     }
   })
   getHeadLine(content)[0].previousElementSibling.insertAdjacentHTML('afterend', `
-    <button class="hwt-action hwt-btn" data-action="home">⌂</button> `)
+    <button class="hwt-action hwt-btn" data-action="home" title="Home">⌂</button> `)
 }
 
 function handleBoardPage(content, boardID) {
   let [page, lastPage] = pagination(content)
   pushHistoryState({screen: 'board-page', board: boardID, page: page, lastPage: lastPage}, `#/${boardID}:${page}`)
   getHeadLine(content)[0].previousElementSibling.insertAdjacentHTML('afterend', `
-    <button class="hwt-cmdlink hwt-btn" data-command="BOARDS">^</button>`)
+    <button class="hwt-cmdlink hwt-btn" data-command="BOARDS" title="To board list">^</button>`)
   content.querySelectorAll('.postsnumber').forEach(p => {
     let n = p.textContent.match(/\[(.+)\]/)?.[1]
     if (n) {
-      p.nextElementSibling?.querySelector('.pm')?.insertAdjacentHTML('beforebegin', `<button class="hwt-btn hwt-cmdlink" data-command="TOPIC -n ${n} && LAST" title="Last page">&gt;&gt;</button>`)
-      makeClickable(p, `TOPIC -n ${n}`)
+      p.nextElementSibling?.querySelector('.pm')?.insertAdjacentHTML('beforebegin', 
+        `<button class="hwt-btn hwt-cmdlink" data-command="TOPIC -n ${n} && LAST" title="Last page">&gt;&gt;</button>`)
+      makeClickable(p, `TOPIC -n ${n}`, "First page")
     }
   })
   content.insertAdjacentHTML('beforeend',
@@ -175,7 +176,7 @@ function handleTopic(content, boardID, boardName, topicID) {
   pushHistoryState({screen: 'topic', board: boardID, topic: topicID, page: page, lastPage: lastPage}, `#/${boardID}/${topicID}:${page}`)
   let headLine = getHeadLine(content)
   let html = `<span class="hwt-backlink">
-    <button class="hwt-btn hwt-cmdlink" data-command="BOARD -n ${boardID}">^ [${boardID}] ${boardName}</button>
+    <button class="hwt-btn hwt-cmdlink" data-command="BOARD -n ${boardID}" title="To board #${boardID} (${boardName})">^ [${boardID}] ${boardName}</button>
     [${topicID}]
   </span>`
   headLine[0].replaceWith(createElementFromHTML(html))
@@ -261,8 +262,8 @@ function randomIntBetween(min = 0, max = 100) {
 
 /*------------------------- App-specific utilities -------------------------*/
 // Turns a text node into a "link"
-function makeClickable(node, command) {
-  node.replaceWith(createElementFromHTML(`<button class="hwt-cmdlink" data-command="${command}">${node.textContent}</button>`))
+function makeClickable(node, command, title='') {
+  node.replaceWith(createElementFromHTML(`<button class="hwt-cmdlink" data-command="${command}" title="${title}">${node.textContent}</button>`))
 }
 // Auto-inputting commands
 document.body.delegateEventListener(['click', 'input'], '.hwt-cmdlink', async function() {
@@ -353,13 +354,13 @@ function pagination(content=document.querySelector('.content')) {
       html =
       `<span class="hwt-pagination">
         ${current > 1 ?
-          `<button class="hwt-cmdlink hwt-btn" data-command="FIRST">&lt;&lt;</button>
-          <button class="hwt-cmdlink hwt-btn" data-command="PREV">&lt;</button>`
+          `<button class="hwt-cmdlink hwt-btn" data-command="FIRST" title="First page">&lt;&lt;</button>
+          <button class="hwt-cmdlink hwt-btn" data-command="PREV" title="Previous page">&lt;</button>`
         :''}
         ${node.textContent}
         ${current < total ?
-          `<button class="hwt-cmdlink hwt-btn" data-command="NEXT">&gt;</button>
-          <button class="hwt-cmdlink hwt-btn" data-command="LAST">&gt;&gt;</button>`
+          `<button class="hwt-cmdlink hwt-btn" data-command="NEXT" title="Next page">&gt;</button>
+          <button class="hwt-cmdlink hwt-btn" data-command="LAST" title="Last page">&gt;&gt;</button>`
         :''}
       </span>`
       node.replaceWith(createElementFromHTML(html))
@@ -465,7 +466,7 @@ function makePostingForm(withTitle = false) {
       </div>
       <div class="hwt-reply-button-wrapper">
         ${withTitle
-          ? `<button class="hwt-btn hwt-action" data-action="newtopic">post</button>`
+          ? `<button class="hwt-btn hwt-action" data-action="newtopic" title="Create new topic">post</button>`
           : `<button class="hwt-btn hwt-action" data-action="reply">reply</button>`
         }
       </div>
