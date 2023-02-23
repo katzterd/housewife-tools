@@ -17,7 +17,6 @@
 const MO = new MutationObserver(observe)
 function observe(mutationList, observer) {
   for (const mutation of mutationList) {
-    // console.log(mutationList)
     if (mutation.type == 'childList' &&
       mutation.target.id == 'content'
     ) {
@@ -37,6 +36,10 @@ MO.observe(document.querySelector('#content'), {subtree: true, childList: true})
 
 function determineState() {
   setBlur(0)
+  if (queuedCommand) {
+    runCommand(...queuedCommand)
+  }
+
   let content = document.querySelector('.content')
   if (!content) {
     handleIndex()
@@ -77,14 +80,14 @@ function parseHeadLine(headLine=getHeadLine(content)) {
 function handleHash(hash) {
   let [board, boardPage, topic, topicPage] = hash.match(/^#(?:\/([0-9]+|[^\/\:\s]*))?(?:\:([0-9]+|))?(?:\/([0-9]+|))?(?:\:([0-9]+|))?/).slice(1)
   if (board == 'boards') {
-    runCommand(`BOARDS`, {pushHistory: false})
+    runCommand(`BOARDS`, {skipHistory: true})
   }
   else if(!isNaN(+board)) {
     if (!isNaN(+topic)) {
-      runCommand(`TOPIC -n ${topic}${!isNaN(+topicPage) ? ` -p ${topicPage}` : ''}`, {pushHistory: false})
+      runCommand(`TOPIC -n ${topic}${!isNaN(+topicPage) ? ` -p ${topicPage}` : ''}`, {skipHistory: true})
     }
     else {
-      runCommand(`BOARD -n ${board}${!isNaN(+boardPage) ? ` -p ${boardPage}` : ''}`, {pushHistory: false})
+      runCommand(`BOARD -n ${board}${!isNaN(+boardPage) ? ` -p ${boardPage}` : ''}`, {skipHistory: true})
     }
   }
 }
@@ -101,10 +104,14 @@ if (document.location.hash) {
   handleHash(document.location.hash)
 }
 
-var pushNextState = false // runCommand() sets this to true in cases when a command is initiated by hashchange, this prevents pushing a state when unnecessary, preserving navigation
-function pushHistoryState(state, url) {
-  if (pushNextState)
+var historySkip = 0 // runCommand() increments this in cases when a command is initiated by a hashchange or concatenated command;
+function pushHistoryState(state, url) {                  // this prevents pushing a state when unnecessary, preserving navigation.
+  if (historySkip > 0) {
+    historySkip--
+  }
+  else {
     window.history.pushState(state, '', url)
+  }
 }
 
 /*-------------------------- App state handlers ----------------------------*/
@@ -142,8 +149,10 @@ function handleBoardPage(content, boardID) {
     <button class="hwt-cmdlink hwt-btn" data-command="BOARDS">^</button>`)
   content.querySelectorAll('.postsnumber').forEach(p => {
     let n = p.textContent.match(/\[(.+)\]/)?.[1]
-    if (n)
+    if (n) {
+      p.nextElementSibling?.querySelector('.pm')?.insertAdjacentHTML('beforebegin', `<button class="hwt-btn hwt-cmdlink" data-command="TOPIC -n ${n} && LAST" title="Last page">&gt;&gt;</button>`)
       makeClickable(p, `TOPIC -n ${n}`)
+    }
   })
   content.insertAdjacentHTML('beforeend',
     `<div class="show-topic-form">
@@ -249,23 +258,36 @@ function makeClickable(node, command) {
 document.body.delegateEventListener(['click', 'input'], '.hwt-cmdlink', async function() {
   let command = this.dataset.command
   , noLoad = this.dataset.noload=="true"
-  , pushHistory = this.dataset.nohistory!='true'
+  , skipHistory = this.dataset.skiphistory=='true'
   if (command) {
-    runCommand(command, {load: !noLoad, pushHistory: pushHistory})
+    command = command.split('&&')
+    if (command.length > 1) {
+      let last = command.pop()
+      command = [command.join('&&'), last]
+    }
+    runCommand(command, {load: !noLoad, skipHistory: skipHistory})
   }
 })
 
-async function runCommand(command, {load = true, pushHistory = true} = {}) {
+var queuedCommand = null;
+async function runCommand(command, {load = true, skipHistory = false} = {}) {
   let cmdLine = document.querySelector('#cmd')
   if (!cmdLine) return;
-  pushNextState = pushHistory
-  let enter = () => {
-    cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
-    if (load)
-      setBlur(true)
-  }  
-  cmdLine.value = command
-  enter()
+  let [thisCommand, nextCommand] = (command instanceof Array) ? command : [command]
+  if (nextCommand) {
+    queuedCommand = [nextCommand, {load: load, skipHistory: skipHistory}]
+    skipHistory = true
+  }
+  else {
+    queuedCommand = null
+  }
+  if (skipHistory) {
+    historySkip++
+  }
+  cmdLine.value = thisCommand
+  cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
+  if (load)
+    setBlur(true)
 }
 
 const actions = {}
@@ -499,7 +521,7 @@ function makePostingForm(withTitle = false) {
 actions.reply = () => {
   let msg = document.querySelector('#hwt-pf-textarea')?.value
   if (msg)
-    runCommand(`REPLY -m ${msg}`)
+    runCommand([`REPLY -m ${msg}`, `LAST`])
 }
 actions.newtopic = () => {
   let title = document.querySelector('#hwt-pf-title')?.value
