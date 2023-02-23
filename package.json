@@ -1,0 +1,22 @@
+{
+  "name": "HouseWife-Tools",
+  "version": "1.0.0",
+  "description": "UX extension for 314n.org",
+  "scripts": {
+    "build": "babel --presets=@babel/preset-env src --out-dir es5"
+  },
+  "keywords": [
+    "314n"
+  ],
+  "author": "Snivy",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/juribiyan/housewife-tools.git"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/cli": "^7.0.0",
+    "@babel/core": "^7.0.0",
+    "@babel/preset-env": "^7.0.0"
+  }
+}
