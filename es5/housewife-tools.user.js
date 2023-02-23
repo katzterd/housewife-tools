@@ -18,9 +18,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://www.0chan.pl/userjs/
-// @version      1.0.0
+// @version      1.0.1
 // @description  UX extension for 314n.org
-// @updateURL    https://github.com/juribiyan/0chan-utilities/raw/master/src/housewife-tools.meta.js
+// @updateURL    https://github.com/juribiyan/0chan-utilities/raw/master/es5/housewife-tools.meta.js
 // @author       Snivy
 // @include      https://314n.org/*
 // @include      https://314n.ru/*
@@ -177,7 +177,6 @@ actions.home = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime(
   }, _callee);
 }));
 function handleHash(hash) {
-  console.log('hash=', hash);
   if (!hash) {
     actions.home(false);
     return;
@@ -372,7 +371,7 @@ function createElementFromHTML(htmlString) {
   return div.firstChild;
 }
 function repeatString(_char, times) {
-  if (times <= 0) return "";
+  if (isNaN(times) || times <= 0) return "";
   return new Array(times + 1).join(_char);
 }
 function randomIntBetween() {
@@ -716,6 +715,6 @@ actions.hwtinfo = function () {
     d2 = function d2(str) {
       return "<div style=\"padding:2px\">".concat(str, "</div>");
     };
-  var msg = "<div class=\"message\"><div style=\"padding-left:10px\">\n    <br>\n    ".concat(r("HouseWife Tools v.".concat(GM_info.script.version)), "\n    <br><br>\n    Keyboard Shortcuts:<br><br>\n    ").concat(d2("".concat(r("Ctrl + \u2192"), ", ").concat(r("Ctrl + \u2190"), " Navigate between pages")), "\n    ").concat(d2("".concat(r("Ctrl + \u2191"), " Move up one layer")), "\n    ").concat(d2("".concat(r("PageUp"), ", ").concat(r("PageDown"), " Scroll up and down the page")), "\n    ").concat(d2("".concat(r("Ctrl + Enter"), " Submit a post")), "\n    <br><br>\n    <a href=\"https://github.com/Juribiyan/housewife-tools\">Project GitHub</a>\n  </div></div>");
+  var msg = "<div class=\"message\"><div style=\"padding-left:10px\">\n    <br>\n    ".concat(r("HouseWife Tools v.".concat(GM_info.script.version)), "\n    <br><br>\n    Keyboard Shortcuts:<br><br>\n    ").concat(d2("".concat(r("Ctrl + \u2192"), ", ").concat(r("Ctrl + \u2190"), " Navigate between pages")), "\n    ").concat(d2("".concat(r("Ctrl + \u2191"), " Move up one layer")), "\n    ").concat(d2("".concat(r("PageUp"), ", ").concat(r("PageDown"), " Scroll up and down the page")), "\n    ").concat(d2("".concat(r("Ctrl + Enter"), " Submit a post")), "\n    <br><br>\n    ").concat(d2("<a href=\"https://github.com/Juribiyan/housewife-tools\" target=\"_blank\">Project GitHub</a>"), "\n    ").concat(d2("<a href=\"#/1/20086:1\" target=\"_blank\">HWT Discussion</a>"), "\n  </div></div>");
   document.querySelector('#content').insertAdjacentHTML('beforeend', msg);
 };

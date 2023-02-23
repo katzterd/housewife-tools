@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://www.0chan.pl/userjs/
-// @version      1.0.0
+// @version      1.0.1
 // @description  UX extension for 314n.org
-// @updateURL    https://github.com/juribiyan/0chan-utilities/raw/master/src/housewife-tools.meta.js
+// @updateURL    https://github.com/juribiyan/0chan-utilities/raw/master/es5/housewife-tools.meta.js
 // @author       Snivy
 // @include      https://314n.org/*
 // @include      https://314n.ru/*
@@ -106,7 +106,6 @@ actions.home = async function(pushHistory=true) {
 }
 
 function handleHash(hash) {
-  console.log('hash=', hash)
   if (!hash) {
     actions.home(false)
     return;
@@ -292,7 +291,7 @@ function createElementFromHTML(htmlString) {
 }
 
 function repeatString(char, times) {
-  if (times <= 0) return "";
+  if (isNaN(times) || times <= 0) return "";
   return new Array(times+1).join(char)
 }
 
@@ -647,7 +646,8 @@ actions.hwtinfo = () => {
     ${d2(`${r(`PageUp`)}, ${r(`PageDown`)} Scroll up and down the page`)}
     ${d2(`${r(`Ctrl + Enter`)} Submit a post`)}
     <br><br>
-    <a href="https://github.com/Juribiyan/housewife-tools">Project GitHub</a>
+    ${d2(`<a href="https://github.com/Juribiyan/housewife-tools" target="_blank">Project GitHub</a>`)}
+    ${d2(`<a href="#/1/20086:1" target="_blank">HWT Discussion</a>`)}
   </div></div>`
   document.querySelector('#content').insertAdjacentHTML('beforeend', msg)
 }
