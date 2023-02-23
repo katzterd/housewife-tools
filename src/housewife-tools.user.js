@@ -48,7 +48,8 @@ function determineState() {
     handleIndex()
     return
   }
-  let [m, boardID, boardName, topicID] = parseHeadLine(getHeadLine(content))
+  let hl = getHeadLine(content)
+  let [m, boardID, boardName, topicID] = parseHeadLine(hl)
   if (m) {
     if (boardName && topicID) {
       handleTopic(content, boardID, boardName, topicID)
@@ -58,7 +59,13 @@ function determineState() {
     }
   }
   else {
-    handleBoardList(content)
+    let title = hl?.[0]?.textContent
+    if (title == 'The list of existing boards:') {
+      handleBoardList(content)
+    }
+    if (title == 'Revent viewed topics') {
+      handleRVT(content)
+    }
   }
 }
 
@@ -89,6 +96,9 @@ function handleHash(hash) {
   if (board == 'boards') {
     runCommand(`BOARDS`, {skipHistory: true})
   }
+  if (board == 'rvt') {
+    runCommand(`RVT`, {skipHistory: true})
+  }
   else if(!isNaN(+board)) {
     if (!isNaN(+topic)) {
       runCommand(`TOPIC -n ${topic}${!isNaN(+topicPage) ? ` -p ${topicPage}` : ''}`, {skipHistory: true})
@@ -118,7 +128,6 @@ function pushHistoryState(state, url) {                  // this prevents pushin
   }
   else {
     window.history.pushState(state, '', url)
-    console.log('pushed:', state)
   }
 }
 
@@ -135,6 +144,7 @@ function handleIndex() {
       <button class="hwt-btn hwt-action hwt-guests-only" data-action="register" >register</button>
       <button class="hwt-btn hwt-cmdlink" data-command="HELP" data-noload="true">help</button>
       <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="LOGOUT" data-noload="true">logout</button>
+      <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="RVT" title="Recent viewed topics">recent</button>
     </div>`)
 }
 
@@ -146,6 +156,21 @@ function handleBoardList(content) {
     let n = b.textContent.match(/^\[([0-9]+)\]/)?.[1]
     if (n) {
       makeClickable(b, `BOARD -n ${n}`)
+    }
+  })
+  getHeadLine(content)[0].previousElementSibling.insertAdjacentHTML('afterend', `
+    <button class="hwt-action hwt-btn" data-action="home" title="Home">⌂</button> `)
+}
+
+function handleRVT(content) {
+  let [page, lastPage] = pagination(content)
+  pushHistoryState({screen: 'rvt', page: page, lastPage: lastPage}, '#/rvt')
+  content.querySelectorAll('.postsnumber').forEach(p => {
+    let n = p.textContent.match(/\[(.+)\]/)?.[1]
+    if (n) {
+      p.nextElementSibling?.querySelector('.pm')?.insertAdjacentHTML('beforebegin', 
+        `<button class="hwt-btn hwt-cmdlink" data-command="TOPIC -n ${n} && LAST" title="Last page">&gt;&gt;</button>`)
+      makeClickable(p, `TOPIC -n ${n}`, "First page")
     }
   })
   getHeadLine(content)[0].previousElementSibling.insertAdjacentHTML('afterend', `
