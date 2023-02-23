@@ -516,7 +516,7 @@ actions.reply = () => {
 actions.newtopic = () => {
   let title = document.querySelector('#hwt-pf-title')?.value
   , content = document.querySelector('#hwt-pf-textarea')?.value
-  if (title && text)
+  if (title && content)
     runCommand(`NEWTOPIC -t ${title} -c ${content}`, true)
 }
 actions.newtopicform = () => {
