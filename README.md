@@ -11,4 +11,4 @@ UX extension for 314n.org
 	* `Ctrl + Enter` to make post.
 * Login form with obscured password 
 
-[<a href="https://github.com/juribiyan/housewife-tools/raw/master/src/housewife-tools.user.js">Install</a>]
+[<a href="https://github.com/juribiyan/housewife-tools/raw/master/src/housewife-tools.user.js">Install</a>] | [<a href="https://github.com/juribiyan/housewife-tools/raw/master/es5/housewife-tools.user.js">Install (legacy browsers)</a>]
