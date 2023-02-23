@@ -77,14 +77,14 @@ function parseHeadLine(headLine=getHeadLine(content)) {
 function handleHash(hash) {
   let [board, boardPage, topic, topicPage] = hash.match(/^#(?:\/([0-9]+|[^\/\:\s]*))?(?:\:([0-9]+|))?(?:\/([0-9]+|))?(?:\:([0-9]+|))?/).slice(1)
   if (board == 'boards') {
-    runCommand(`BOARDS`, true, false)
+    runCommand(`BOARDS`, {pushHistory: false})
   }
   else if(!isNaN(+board)) {
     if (!isNaN(+topic)) {
-      runCommand(`TOPIC -n ${topic}${!isNaN(+topicPage) ? ` -p ${topicPage}` : ''}`, true, false)
+      runCommand(`TOPIC -n ${topic}${!isNaN(+topicPage) ? ` -p ${topicPage}` : ''}`, {pushHistory: false})
     }
     else {
-      runCommand(`BOARD -n ${board}${!isNaN(+boardPage) ? ` -p ${boardPage}` : ''}`, true, false)
+      runCommand(`BOARD -n ${board}${!isNaN(+boardPage) ? ` -p ${boardPage}` : ''}`, {pushHistory: false})
     }
   }
 }
@@ -118,7 +118,7 @@ function handleIndex() {
       <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="BOARDS">boards</button>
       <button class="hwt-btn hwt-action hwt-guests-only" data-action="login">login</button>
       <button class="hwt-btn hwt-action hwt-guests-only" data-action="register" >register</button>
-      <button class="hwt-cmdlink hwt-btn" data-command="HELP" data-noload="true">help</button>
+      <button class="hwt-btn hwt-cmdlink" data-command="HELP" data-noload="true">help</button>
       <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="LOGOUT" data-noload="true">logout</button>
     </div>`)
 }
@@ -233,7 +233,7 @@ function randomIntBetween(min = 0, max = 100) {
   // generate random number 
   let rand = Math.random();
   // multiply with difference 
-  rand = Math.floor( rand * difference);
+  rand = Math.floor(rand * difference);
   // add with min value 
   rand = rand + min;
   return rand;
@@ -248,36 +248,24 @@ function makeClickable(node, command) {
 // Auto-inputting commands
 document.body.delegateEventListener(['click', 'input'], '.hwt-cmdlink', async function() {
   let command = this.dataset.command
-  let noLoad = this.dataset?.noload
+  , noLoad = this.dataset.noload=="true"
+  , pushHistory = this.dataset.nohistory!='true'
   if (command) {
-    runCommand(command, !isPathInView(), true, noLoad)
+    runCommand(command, {load: !noLoad, pushHistory: pushHistory})
   }
 })
 
-async function runCommand(command, noFrills=!isPathInView(), pushHistory=true, noLoad=false) {
+async function runCommand(command, {load = true, pushHistory = true} = {}) {
   let cmdLine = document.querySelector('#cmd')
-  if (cmdLine) {
-    pushNextState = pushHistory
-    let enter = () => {
-      cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
-      if (!noLoad)
-        setBlur(true)
-    }
-    if (!noFrills) {
-      command = command.split('')
-      let ch
-      while(ch = command.shift()) {
-        await sleep(15).then(() => {
-          cmdLine.value += ch
-        })
-      }
-      await sleep(150).then(enter)
-    }
-    else {
-      cmdLine.value = command
-      enter()
-    }
-  }
+  if (!cmdLine) return;
+  pushNextState = pushHistory
+  let enter = () => {
+    cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
+    if (load)
+      setBlur(true)
+  }  
+  cmdLine.value = command
+  enter()
 }
 
 const actions = {}
@@ -308,7 +296,7 @@ function makeLoginForm(action='LOGIN') {
         password.focus()
         password.addEventListener('keypress', function(ev) {
           if (ev.key == 'Enter') {
-            runCommand(`${action} -u ${login.value} -p ${password.value}`, true)
+            runCommand(`${action} -u ${login.value} -p ${password.value}`, {load: false})
           }
         })
       }
@@ -367,7 +355,7 @@ function handleMessage(type, message) {
   if (type == 'message' && message == 'you are now registered') {
     let login = document.querySelector('#hwt-login').value
     , password = document.querySelector('#hwt-password').value
-    runCommand(`LOGIN -u ${login} -p ${password}`, true)
+    runCommand(`LOGIN -u ${login} -p ${password}`, {load: false})
   }
   // Logout
   if (type == 'message' && message == 'You have been logged out') {
@@ -484,7 +472,7 @@ function makePostingForm(withTitle = false) {
       border.innerHTML = head + line + divider + repeatString(line, h-4) + tail
     }
   }
-  let debounceTimeout;
+  let debounceTimeout, ro;
   let debouncedResizeHandler = (ev) => {
     clearTimeout(debounceTimeout)
     debounceTimeout = setTimeout(() => {
@@ -495,7 +483,7 @@ function makePostingForm(withTitle = false) {
       updateBorders()
     }, 10)
   }
-  let ro = new ResizeObserver(debouncedResizeHandler)
+  ro = new ResizeObserver(debouncedResizeHandler)
   setTimeout(() => {
     window.requestAnimationFrame(() => {
       debouncedResizeHandler()
@@ -511,13 +499,13 @@ function makePostingForm(withTitle = false) {
 actions.reply = () => {
   let msg = document.querySelector('#hwt-pf-textarea')?.value
   if (msg)
-    runCommand(`REPLY -m ${msg}`, true)
+    runCommand(`REPLY -m ${msg}`)
 }
 actions.newtopic = () => {
   let title = document.querySelector('#hwt-pf-title')?.value
   , content = document.querySelector('#hwt-pf-textarea')?.value
   if (title && content)
-    runCommand(`NEWTOPIC -t ${title} -c ${content}`, true)
+    runCommand(`NEWTOPIC -t ${title} -c ${content}`)
 }
 actions.newtopicform = () => {
   document.querySelector('.show-topic-form')?.remove()
