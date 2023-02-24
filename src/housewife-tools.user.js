@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://www.0chan.pl/userjs/
-// @version      1.0.1
+// @version      1.0.2
 // @description  UX extension for 314n.org
 // @updateURL    https://github.com/juribiyan/housewife-tools/raw/master/es5/housewife-tools.meta.js
 // @author       Snivy
@@ -258,6 +258,8 @@ var injector = {
 
 const baseCSS = GM_getResourceText("baseCSS")
 injector.inject('hwt', baseCSS)
+injector.inject('hwt-monoji', `@import url('https://fonts.googleapis.com/css2?family=Noto+Emoji:wght@300&display=swap');
+  #console { font-family: "Courier New", Courier, "Noto Emoji", monospace; } `)
 
 
 /*--------------------------- General utilities ----------------------------*/
