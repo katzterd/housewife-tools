@@ -18,7 +18,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://www.0chan.pl/userjs/
-// @version      1.0.1
+// @version      1.1.0
 // @description  UX extension for 314n.org
 // @updateURL    https://github.com/juribiyan/housewife-tools/raw/master/es5/housewife-tools.meta.js
 // @author       Snivy
@@ -49,7 +49,7 @@ function observe(mutationList, observer) {
             return (i === null || i === void 0 ? void 0 : (_i$classList2 = i.classList) === null || _i$classList2 === void 0 ? void 0 : _i$classList2.contains('error')) || (i === null || i === void 0 ? void 0 : (_i$classList3 = i.classList) === null || _i$classList3 === void 0 ? void 0 : _i$classList3.contains('message'));
           });
           if (msg) {
-            handleMessage(msg.className, msg.textContent);
+            messageBroker.handle(msg.className, msg.textContent);
           }
         }
       }
@@ -66,7 +66,6 @@ function reObserve() {
     childList: true
   });
 }
-reObserve();
 function determineState() {
   setBlur(0);
   if (queuedCommand) {
@@ -215,10 +214,6 @@ window.addEventListener('hashchange', function (ev) {
   var _URL;
   handleHash((_URL = new URL(ev.newURL)) === null || _URL === void 0 ? void 0 : _URL.hash);
 });
-handleIndex();
-if (document.location.hash) {
-  handleHash(document.location.hash);
-}
 var historySkip = 0; // runCommand() increments this in cases when a command is initiated by a hashchange or concatenated command;
 function pushHistoryState(state, url) {
   // this prevents pushing a state when unnecessary, preserving navigation.
@@ -313,8 +308,8 @@ function handleTopic(content, boardID, boardName, topicID) {
   var headLine = getHeadLine(content);
   var html = "<span class=\"hwt-backlink\">\n    <button class=\"hwt-btn hwt-cmdlink\" data-command=\"BOARD -n ".concat(boardID, "\" title=\"To board #").concat(boardID, " (").concat(boardName, ")\">^ [").concat(boardID, "] ").concat(boardName, "</button>\n    [").concat(topicID, "]\n  </span>");
   headLine[0].replaceWith(createElementFromHTML(html));
-  // let allPosts = document.querySelectorAll('.posts')
-  makePostingForm();
+  postingForm.create();
+  interactivePosts.init(content.querySelectorAll('.post'));
 }
 
 /*---------------------------------- CSS -----------------------------------*/
@@ -341,20 +336,39 @@ var injector = {
 };
 var baseCSS = GM_getResourceText("baseCSS");
 injector.inject('hwt', baseCSS);
+injector.inject('hwt-monoji', "@import url('https://fonts.googleapis.com/css2?family=Noto+Emoji:wght@300&display=swap');\n  #console { font-family: \"Courier New\", Courier, \"Noto Emoji\", monospace; } ");
 
 /*--------------------------- General utilities ----------------------------*/
 EventTarget.prototype.delegateEventListener = function (types, targetSelectors, listener, options) {
+  // if (! (types instanceof Array))
+  // types = types.split(' ')
+  if (!(targetSelectors instanceof Array)) targetSelectors = [targetSelectors];
+  this.addMultiEventListener(types, function (ev) {
+    targetSelectors.some(function (selector) {
+      if (ev.target.matches(selector)) {
+        listener.bind(ev.target)(ev);
+        return true;
+      }
+    });
+  }, options);
+  /*types.forEach(type => {
+    this.addEventListener(type, ev => {
+      targetSelectors.some(selector => {
+        if (ev.target.matches(selector)) {
+          listener.bind(ev.target)(ev)
+          return true
+        }
+      })
+    }, options)
+  })*/
+};
+
+EventTarget.prototype.addMultiEventListener = function (types, listener, options) {
   var _this = this;
   if (!(types instanceof Array)) types = types.split(' ');
-  if (!(targetSelectors instanceof Array)) targetSelectors = [targetSelectors];
   types.forEach(function (type) {
     _this.addEventListener(type, function (ev) {
-      targetSelectors.some(function (selector) {
-        if (ev.target.matches(selector)) {
-          listener.bind(ev.target)(ev);
-          return true;
-        }
-      });
+      listener.bind(ev.target)(ev);
     }, options);
   });
 };
@@ -386,6 +400,21 @@ function randomIntBetween() {
   // add with min value 
   rand = rand + min;
   return rand;
+}
+
+// Returns a promise wrapped in an object that contains resolve() and reject() methods for the promise
+function exposedPromise() {
+  var promiseResolve,
+    promiseReject,
+    promise = new Promise(function (resolve, reject) {
+      promiseResolve = resolve;
+      promiseReject = reject;
+    });
+  return {
+    promise: promise,
+    resolve: promiseResolve,
+    reject: promiseReject
+  };
 }
 
 /*------------------------- App-specific utilities -------------------------*/
@@ -423,30 +452,34 @@ function runCommand(_x2) {
   return _runCommand.apply(this, arguments);
 }
 function _runCommand() {
-  _runCommand = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3(command) {
-    var _ref3,
-      _ref3$load,
+  _runCommand = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee6(command) {
+    var _ref4,
+      _ref4$load,
       load,
-      _ref3$skipHistory,
+      _ref4$skipHistory,
       skipHistory,
       cmdLine,
-      _ref4,
       _ref5,
+      _ref6,
       thisCommand,
       nextCommand,
-      _args3 = arguments;
-    return _regeneratorRuntime().wrap(function _callee3$(_context3) {
-      while (1) switch (_context3.prev = _context3.next) {
+      _args6 = arguments;
+    return _regeneratorRuntime().wrap(function _callee6$(_context6) {
+      while (1) switch (_context6.prev = _context6.next) {
         case 0:
-          _ref3 = _args3.length > 1 && _args3[1] !== undefined ? _args3[1] : {}, _ref3$load = _ref3.load, load = _ref3$load === void 0 ? true : _ref3$load, _ref3$skipHistory = _ref3.skipHistory, skipHistory = _ref3$skipHistory === void 0 ? false : _ref3$skipHistory;
+          _ref4 = _args6.length > 1 && _args6[1] !== undefined ? _args6[1] : {}, _ref4$load = _ref4.load, load = _ref4$load === void 0 ? true : _ref4$load, _ref4$skipHistory = _ref4.skipHistory, skipHistory = _ref4$skipHistory === void 0 ? false : _ref4$skipHistory;
           cmdLine = document.querySelector('#cmd');
           if (cmdLine) {
-            _context3.next = 4;
+            _context6.next = 4;
             break;
           }
-          return _context3.abrupt("return");
+          return _context6.abrupt("return");
         case 4:
-          _ref4 = command instanceof Array ? command : [command], _ref5 = _slicedToArray(_ref4, 2), thisCommand = _ref5[0], nextCommand = _ref5[1];
+          _context6.next = 6;
+          return postingForm.quitEditingContext();
+        case 6:
+          // If in editing context prevent a command from being leaked into the post body
+          _ref5 = command instanceof Array ? command : [command], _ref6 = _slicedToArray(_ref5, 2), thisCommand = _ref6[0], nextCommand = _ref6[1];
           if (nextCommand) {
             queuedCommand = [nextCommand, {
               load: load,
@@ -464,11 +497,11 @@ function _runCommand() {
             keyCode: 13
           })); // Simulatie pressing Enter
           if (load) setBlur(1);
-        case 10:
+        case 12:
         case "end":
-          return _context3.stop();
+          return _context6.stop();
       }
-    }, _callee3);
+    }, _callee6);
   }));
   return _runCommand.apply(this, arguments);
 }
@@ -500,7 +533,7 @@ function makeLoginForm() {
 }
 actions.login = makeLoginForm('login');
 actions.register = makeLoginForm('register');
-document.body.delegateEventListener('click', '.hwt-action', /*async*/function () {
+document.body.delegateEventListener(['click', 'input'], '.hwt-action', /*async*/function () {
   var action = this.dataset.action;
   actions[action](this);
 });
@@ -533,25 +566,44 @@ function pagination() {
   return ((document.querySelector('#path').getBoundingClientRect().bottom - document.querySelector('#wrapper').getBoundingClientRect().bottom) < 96)
 }*/
 
-function handleMessage(type, message) {
-  //successful login
-  if (type == 'message' && message == 'you are logged in') {
-    document.querySelector('.hwt-login-form').remove();
-    document.querySelector('.hwt-menu').classList.remove('hwt-guest');
+var messageBroker = {
+  handle: function handle(type, message) {
+    //successful login
+    if (type == 'message' && message == 'you are logged in') {
+      document.querySelector('.hwt-login-form').remove();
+      document.querySelector('.hwt-menu').classList.remove('hwt-guest');
+    }
+    //successful registration -> immediate login
+    if (type == 'message' && message == 'you are now registered') {
+      var login = document.querySelector('#hwt-login').value,
+        password = document.querySelector('#hwt-password').value;
+      runCommand("LOGIN -u ".concat(login, " -p ").concat(password), {
+        load: false
+      });
+    }
+    // Logout
+    if (type == 'message' && message == 'You have been logged out') {
+      document.querySelector('.hwt-menu').classList.add('hwt-guest');
+    }
+    // Successful deletion
+    if (type == 'message' && message == 'Post has been deleted') {
+      var _this$expected;
+      (_this$expected = this.expected) === null || _this$expected === void 0 ? void 0 : _this$expected.resolve();
+    }
+    // Unsuccessful deletion / edit
+    if (type == 'error') {
+      var _this$expected2;
+      (_this$expected2 = this.expected) === null || _this$expected2 === void 0 ? void 0 : _this$expected2.reject();
+    }
+  },
+  // expected: {},
+  expect: function expect( /*type*/
+  ) {
+    var xp = exposedPromise();
+    this.expected /*['_'+type]*/ = xp;
+    return xp.promise;
   }
-  //successful registration -> immediate login
-  if (type == 'message' && message == 'you are now registered') {
-    var login = document.querySelector('#hwt-login').value,
-      password = document.querySelector('#hwt-password').value;
-    runCommand("LOGIN -u ".concat(login, " -p ").concat(password), {
-      load: false
-    });
-  }
-  // Logout
-  if (type == 'message' && message == 'You have been logged out') {
-    document.querySelector('.hwt-menu').classList.add('hwt-guest');
-  }
-}
+};
 
 // Keyboard navigation
 document.addEventListener("keydown", function (ev) {
@@ -575,7 +627,7 @@ document.addEventListener("keydown", function (ev) {
       }
     }
     if (ev.key == 'Enter' && ~document.activeElement.id.indexOf('hwt-pf')) {
-      if (document.querySelector('#hwt-pf-title')) actions.newtopic();else actions.reply();
+      if (document.querySelector('#hwt-pf-title')) actions.newtopic();else if (postingForm.context) postingForm.submitEdit();else actions.reply();
     }
   } else {
     var sc = document.querySelector('.scrollcontent');
@@ -603,70 +655,26 @@ function setLogo() {
     node = node.nextSibling;
   }
 }
-function makePostingForm() {
-  var withTitle = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-  var html = "\n    <div id=\"hwt-posting-form\" style=\"visibility:hidden\">\n      <div class=\"hwt-textarea-wrapper".concat(withTitle ? ' hwt-tc-with-title' : '', "\">\n        <div class=\"hwt-textarea-border\"></div>\n        ").concat(withTitle ? "<input id=\"hwt-pf-title\" type=\"text\" class=\"hwt-txt-input hwt-title-input\" placeholder=\"Title...\">" : '', "\n        <textarea id=\"hwt-pf-textarea\" style=\"resize:false\" rows=\"3\" class=\"hwt-txt-input hwt-msg-area\"").concat(withTitle ? " placeholder=\"Message...\"" : '', "></textarea>\n      </div>\n      <div class=\"hwt-reply-button-wrapper\">\n        ").concat(withTitle ? "<button class=\"hwt-btn hwt-action\" data-action=\"newtopic\" title=\"Create new topic\">post</button>" : "<button class=\"hwt-btn hwt-action\" data-action=\"reply\">reply</button>", "\n      </div>\n    </div>");
-  document.querySelector('.content').insertAdjacentHTML('afterend', html);
-  var form = document.querySelector('#hwt-posting-form'),
-    wr = form.querySelector('.hwt-textarea-wrapper'),
-    border = wr.querySelector('.hwt-textarea-border'),
-    textarea = wr.querySelector('textarea');
-  var updateBorders = function updateBorders() {
-    // Determine the character dimensions
-    border.textContent = repeatString("-", 10); // for better subpixel precision in Chrome
-    var charWidth = border.offsetWidth / 10,
-      charHeight = border.offsetHeight;
-    injector.inject('hwt-postingform-margins', "\n      .hwt-textarea-wrapper .hwt-txt-input {\n        border-width: ".concat(charHeight, "px ").concat(charWidth * 2, "px\n      }\n      ").concat(withTitle ? ".hwt-msg-area {\n        border-top-width: 0!important;\n      }" : ''));
-    var w = Math.floor(wr.offsetWidth / charWidth),
-      h = Math.round(wr.offsetHeight / charHeight);
-    var head = "," + repeatString("–", w - 2) + ".<br>",
-      line = "|" + repeatString("&nbsp;", w - 2) + "|<br>",
-      tail = "`" + repeatString("–", w - 2) + "'";
-    if (!withTitle) {
-      border.innerHTML = head + repeatString(line, h - 2) + tail;
-    } else {
-      var divider = "}" + repeatString("-", w - 2) + "{<br>";
-      border.innerHTML = head + line + divider + repeatString(line, h - 4) + tail;
-    }
-  };
-  var debounceTimeout, ro;
-  var debouncedResizeHandler = function debouncedResizeHandler(ev) {
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(function () {
-      if (!form.parentNode) {
-        ro.disconnect();
-        return;
-      }
-      updateBorders();
-    }, 10);
-  };
-  ro = new ResizeObserver(debouncedResizeHandler);
-  setTimeout(function () {
-    window.requestAnimationFrame(function () {
-      debouncedResizeHandler();
-      ro.observe(textarea);
-      form.style.visibility = 'visible';
-    });
-  }, 200);
-  textarea.addEventListener("input", function (ev) {
-    textarea.rows = Math.max(textarea.value.split(/\n/).length, 3);
-  });
-}
 actions.reply = function () {
-  var _document$querySelect2;
-  var msg = (_document$querySelect2 = document.querySelector('#hwt-pf-textarea')) === null || _document$querySelect2 === void 0 ? void 0 : _document$querySelect2.value;
+  var _postingForm$textarea;
+  var msg = (_postingForm$textarea = postingForm.textarea) === null || _postingForm$textarea === void 0 ? void 0 : _postingForm$textarea.value;
   if (msg) runCommand(["REPLY -m ".concat(msg), "LAST"]);
 };
 actions.newtopic = function () {
-  var _document$querySelect3, _document$querySelect4;
-  var title = (_document$querySelect3 = document.querySelector('#hwt-pf-title')) === null || _document$querySelect3 === void 0 ? void 0 : _document$querySelect3.value,
-    content = (_document$querySelect4 = document.querySelector('#hwt-pf-textarea')) === null || _document$querySelect4 === void 0 ? void 0 : _document$querySelect4.value;
+  var _postingForm$title, _postingForm$textarea2;
+  var title = (_postingForm$title = postingForm.title) === null || _postingForm$title === void 0 ? void 0 : _postingForm$title.value,
+    content = (_postingForm$textarea2 = postingForm.textarea) === null || _postingForm$textarea2 === void 0 ? void 0 : _postingForm$textarea2.value;
   if (title && content) runCommand("NEWTOPIC -t ".concat(title, " -c ").concat(content));
 };
 actions.newtopicform = function () {
-  var _document$querySelect5;
-  (_document$querySelect5 = document.querySelector('.show-topic-form')) === null || _document$querySelect5 === void 0 ? void 0 : _document$querySelect5.remove();
-  makePostingForm(true);
+  var _document$querySelect2;
+  (_document$querySelect2 = document.querySelector('.show-topic-form')) === null || _document$querySelect2 === void 0 ? void 0 : _document$querySelect2.remove();
+  postingForm.create(true);
+};
+actions.edit = function () {
+  var _postingForm$textarea3;
+  var msg = (_postingForm$textarea3 = postingForm.textarea) === null || _postingForm$textarea3 === void 0 ? void 0 : _postingForm$textarea3.value;
+  if (msg) runCommand(msg);
 };
 var animationRun;
 function setBlur() {
@@ -718,3 +726,390 @@ actions.hwtinfo = function () {
   var msg = "<div class=\"message\"><div style=\"padding-left:10px\">\n    <br>\n    ".concat(r("HouseWife Tools v.".concat(GM_info.script.version)), "\n    <br><br>\n    Keyboard Shortcuts:<br><br>\n    ").concat(d2("".concat(r("Ctrl + \u2192"), ", ").concat(r("Ctrl + \u2190"), " Navigate between pages")), "\n    ").concat(d2("".concat(r("Ctrl + \u2191"), " Move up one layer")), "\n    ").concat(d2("".concat(r("PageUp"), ", ").concat(r("PageDown"), " Scroll up and down the page")), "\n    ").concat(d2("".concat(r("Ctrl + Enter"), " Submit a post")), "\n    <br><br>\n    ").concat(d2("<a href=\"https://github.com/Juribiyan/housewife-tools\" target=\"_blank\">Project GitHub</a>"), "\n    ").concat(d2("<a href=\"#/1/20086:1\" target=\"_blank\">HWT Discussion</a>"), "\n  </div></div>");
   document.querySelector('#content').insertAdjacentHTML('beforeend', msg);
 };
+
+// --------------------- Post interaction ---------------------
+var interactivePosts = {
+  processPost: function processPost(post) {
+    var _pn$innerText$match,
+      _postCode$innerText$m,
+      _this3 = this;
+    var pn = post.querySelector('.postnumber');
+    var id = +(pn === null || pn === void 0 ? void 0 : (_pn$innerText$match = pn.innerText.match(/[0-9]+/)) === null || _pn$innerText$match === void 0 ? void 0 : _pn$innerText$match[0]);
+    if (isNaN(id)) return 0;
+    var postCode = post.querySelector('.post-code');
+    var pc = postCode === null || postCode === void 0 ? void 0 : (_postCode$innerText$m = postCode.innerText.match(/[A-Z]+/)) === null || _postCode$innerText$m === void 0 ? void 0 : _postCode$innerText$m[0];
+    if (!pc) return 0;
+    pn.insertAdjacentHTML('beforeend', "<span class=\"hwt-post-menu\">\n      <button class=\"hwt-btn hwt-post-edit\">edit</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-post-delete\" data-command=\"DELETE -p ".concat(id, "\" data-noload=\"true\">delete</button>\n      <button class=\"hwt-btn hwt-action\" data-action=\"anchor\">#</button>\n    </span"));
+    pn.querySelector('.hwt-post-delete').addMultiEventListener(['click', 'input'], function () {
+      var _this2 = this;
+      messageBroker.expect().then(function () {
+        var _pn$querySelector;
+        post.classList.add('hwt-deleted');
+        (_pn$querySelector = pn.querySelector('.hwt-post-menu')) === null || _pn$querySelector === void 0 ? void 0 : _pn$querySelector.remove();
+      })["catch"](function () {
+        var _pn$querySelector2;
+        _this2.remove();
+        (_pn$querySelector2 = pn.querySelector('.hwt-post-edit')) === null || _pn$querySelector2 === void 0 ? void 0 : _pn$querySelector2.remove();
+      });
+    });
+    pn.querySelector('.hwt-post-edit').addMultiEventListener(['click', 'input'], /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
+      var json;
+      return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+        while (1) switch (_context3.prev = _context3.next) {
+          case 0:
+            _context3.next = 2;
+            return softCommand("EDIT -p ".concat(id));
+          case 2:
+            json = _context3.sent;
+            if (json && json.edit == 1) {
+              postingForm.enterEditingContext(json.edittext, json.path, id);
+            } else {
+              this.remove();
+              pn.querySelector('.hwt-post-delete').remove();
+              if (json.message) {
+                document.querySelector('#content').insertAdjacentHTML('beforeend', json.message);
+              }
+            }
+          case 4:
+          case "end":
+            return _context3.stop();
+        }
+      }, _callee3, this);
+    })));
+    postCode.addEventListener('mouseenter', function () {
+      return _this3.highlight(pc /*, post*/);
+    });
+    postCode.addEventListener('mouseleave', function () {
+      return _this3.highlight(false);
+    });
+    postCode.addEventListener('click', function () {
+      return postingForm.insert("2".concat(pc, ": "));
+    });
+    var content = post.querySelector('.post-content');
+    if (content) {
+      [].filter.call(content.childNodes, function (node) {
+        var _node$classList, _node$previousSibling;
+        return (
+          // Find new line nodes
+          (node.nodeName == "#text" || node.nodeName != 'BR' && !((_node$classList = node.classList) !== null && _node$classList !== void 0 && _node$classList.contains('postnumber')) && !node.querySelector('.pendant')) && ['BR', 'DIV'].includes((_node$previousSibling = node.previousSibling) === null || _node$previousSibling === void 0 ? void 0 : _node$previousSibling.nodeName)
+        );
+      }).forEach(function (subNode) {
+        // add interactivity to posts references in text
+        var refID = false,
+          ref,
+          replacedContent = subNode.textContent.replace(/^2?([A-Z]+)[,\:]?/, function (m, g1) {
+            ref = m;
+            refID = g1;
+            return '';
+          });
+        if (refID) {
+          subNode.textContent = replacedContent;
+          var refLink = createElementFromHTML("<span class=\"hwt-reflink\">".concat(ref, "</span>"));
+          refLink.addEventListener('mouseenter', function () {
+            return _this3.highlight(refID /*, post*/);
+          });
+          refLink.addEventListener('mouseleave', function () {
+            return _this3.highlight(false);
+          });
+          if (typeof subNode.innerHTML != 'undefined') subNode.prepend(refLink);else content.insertBefore(refLink, subNode);
+        }
+      });
+      // TODO: multiple references like in https://314n.org/#/1/23:7
+    }
+
+    return {
+      el: post,
+      id: id,
+      author: pc
+    };
+  },
+  init: function init(posts) {
+    this.posts = [].map.call(posts, this.processPost.bind(this)).filter(function (post) {
+      return post !== 0;
+    });
+  },
+  posts: [],
+  highlight: function highlight(pc) {
+    var self = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+    this.posts.forEach(function (post) {
+      if (pc === false) {
+        post.el.classList.remove('hwt-post-highlight');
+      } else if (post.author == pc /*&& post.el != self*/) {
+        post.el.classList.add('hwt-post-highlight');
+      }
+    });
+  }
+};
+var postingForm = {
+  get form() {
+    return this._form || this.update() && this._form;
+  },
+  get wrapper() {
+    return this._wrapper || this.update() && this._wrapper;
+  },
+  get textarea() {
+    return this._textarea || this.update() && this._textarea;
+  },
+  get title() {
+    return this._title || this.update() && this._title;
+  },
+  update: function update() {
+    var _this$_form, _this$_wrapper, _this$_wrapper2;
+    this._form = document.querySelector('#hwt-posting-form');
+    this._wrapper = (_this$_form = this._form) === null || _this$_form === void 0 ? void 0 : _this$_form.querySelector('.hwt-textarea-wrapper');
+    this._textarea = (_this$_wrapper = this._wrapper) === null || _this$_wrapper === void 0 ? void 0 : _this$_wrapper.querySelector('textarea');
+    this._title = (_this$_wrapper2 = this._wrapper) === null || _this$_wrapper2 === void 0 ? void 0 : _this$_wrapper2.querySelector('input');
+  },
+  create: function create() {
+    var _this4 = this;
+    var withTitle = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+    var html = "\n      <div id=\"hwt-posting-form\" style=\"visibility:hidden\">\n        <div class=\"hwt-textarea-wrapper".concat(withTitle ? ' hwt-tc-with-title' : '', "\">\n          <div class=\"hwt-textarea-border\"></div>\n          ").concat(withTitle ? "<input id=\"hwt-pf-title\" type=\"text\" class=\"hwt-txt-input hwt-title-input\" placeholder=\"Title...\">" : '', "\n          <textarea id=\"hwt-pf-textarea\" style=\"resize:false\" rows=\"3\" class=\"hwt-txt-input hwt-msg-area\"").concat(withTitle ? " placeholder=\"Message...\"" : '', "></textarea>\n        </div>\n        <div class=\"hwt-reply-button-wrapper\">\n          ").concat(withTitle ? "<button class=\"hwt-btn hwt-action\" data-action=\"newtopic\" title=\"Create new topic\">post</button>" : "<button class=\"hwt-btn hwt-action hwt-reply-btn\" data-action=\"reply\">reply</button>", "\n        </div>\n      </div>");
+    document.querySelector('.content').insertAdjacentHTML('afterend', html);
+    this.update();
+    var debounceTimeout, ro;
+    var debouncedResizeHandler = function debouncedResizeHandler(ev) {
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(function () {
+        if (!_this4.form.parentNode) {
+          ro.disconnect();
+          return;
+        }
+        _this4.updateBorders(withTitle);
+      }, 10);
+    };
+    ro = new ResizeObserver(debouncedResizeHandler);
+    setTimeout(function () {
+      window.requestAnimationFrame(function () {
+        debouncedResizeHandler();
+        ro.observe(_this4.textarea);
+        _this4.form.style.visibility = 'visible';
+      });
+    }, 200);
+    this.textarea.addEventListener("input", function (ev) {
+      _this4.textarea.rows = Math.max(_this4.textarea.value.split(/\n/).length, 3);
+    });
+  },
+  updateBorders: function updateBorders(withTitle) {
+    var border = this.wrapper.querySelector('.hwt-textarea-border');
+    // Determine the character dimensions
+    border.textContent = repeatString("-", 10); // for better subpixel precision in Chrome
+    var charWidth = border.offsetWidth / 10,
+      charHeight = border.offsetHeight;
+    injector.inject('hwt-postingform-margins', "\n      .hwt-textarea-wrapper .hwt-txt-input {\n        border-width: ".concat(charHeight, "px ").concat(charWidth * 2, "px\n      }\n      ").concat(withTitle ? ".hwt-msg-area {\n        border-top-width: 0!important;\n      }" : ''));
+    var w = Math.floor(this.wrapper.offsetWidth / charWidth),
+      h = Math.round(this.wrapper.offsetHeight / charHeight);
+    var head = "," + repeatString("–", w - 2) + ".<br>",
+      line = "|" + repeatString("&nbsp;", w - 2) + "|<br>",
+      tail = "`" + repeatString("–", w - 2) + "'";
+    if (!withTitle) {
+      border.innerHTML = head + repeatString(line, h - 2) + tail;
+    } else {
+      var divider = "}" + repeatString("-", w - 2) + "{<br>";
+      border.innerHTML = head + line + divider + repeatString(line, h - 4) + tail;
+    }
+  },
+  insert: function insert(txt) {
+    this.textarea.value = txt;
+  },
+  enterEditingContext: function enterEditingContext(txt, path, postID) {
+    var $path = document.querySelector('#path');
+    this.context = {
+      path: $path.innerHTML,
+      value: this.textarea.value,
+      edittext: txt,
+      postID: postID
+    };
+    this.textarea.value = txt;
+    $path.innerHTML = "".concat(path, "&nbsp;&gt;&nbsp;");
+    var rb = this.form.querySelector('.hwt-reply-btn');
+    rb.style.display = 'none';
+    rb.insertAdjacentHTML('afterend', "<div class=\"hwt-edit-btns\">\n      <button class=\"hwt-btn hwt-action\" data-action=\"submitedit\">edit</button>\n      <button class=\"hwt-btn hwt-action\" data-action=\"unedit\">cancel</button>\n    </div>");
+    this.isEditing = true;
+  },
+  // return to normal context by sending an original message
+  quitEditingContext: function () {
+    var _quitEditingContext = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
+      var reflectOnly,
+        $path,
+        _args4 = arguments;
+      return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+        while (1) switch (_context4.prev = _context4.next) {
+          case 0:
+            reflectOnly = _args4.length > 0 && _args4[0] !== undefined ? _args4[0] : false;
+            if (this.context) {
+              _context4.next = 3;
+              break;
+            }
+            return _context4.abrupt("return", false);
+          case 3:
+            $path = document.querySelector('#path');
+            $path.innerHTML = this.context.path;
+            this.textarea.value = this.context.value;
+            this.form.querySelector('.hwt-reply-btn').style.display = '';
+            this.form.querySelector('.hwt-edit-btns').remove();
+            if (reflectOnly) {
+              _context4.next = 11;
+              break;
+            }
+            _context4.next = 11;
+            return softCommand(this.context.edittext, false);
+          case 11:
+            delete this.context;
+            return _context4.abrupt("return", true);
+          case 13:
+          case "end":
+            return _context4.stop();
+        }
+      }, _callee4, this);
+    }));
+    function quitEditingContext() {
+      return _quitEditingContext.apply(this, arguments);
+    }
+    return quitEditingContext;
+  }(),
+  submitEdit: function () {
+    var _submitEdit = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5() {
+      var res, _this$context, _yield$softCommand, id, htm, dom, newPost, oldPost;
+      return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+        while (1) switch (_context5.prev = _context5.next) {
+          case 0:
+            _context5.next = 2;
+            return softCommand(postingForm.textarea.value, false);
+          case 2:
+            res = _context5.sent;
+            if (!res.message) {
+              _context5.next = 32;
+              break;
+            }
+            document.querySelector('#content').insertAdjacentHTML('beforeend', res.message);
+            if (!~res.message.indexOf("Post has been edited")) {
+              _context5.next = 32;
+              break;
+            }
+            id = (_this$context = this.context) === null || _this$context === void 0 ? void 0 : _this$context.postID;
+            if (id) {
+              _context5.next = 9;
+              break;
+            }
+            return _context5.abrupt("return");
+          case 9:
+            _context5.next = 11;
+            return softCommand("REFRESH");
+          case 11:
+            _context5.t1 = _yield$softCommand = _context5.sent;
+            _context5.t0 = _context5.t1 === null;
+            if (_context5.t0) {
+              _context5.next = 15;
+              break;
+            }
+            _context5.t0 = _yield$softCommand === void 0;
+          case 15:
+            if (!_context5.t0) {
+              _context5.next = 19;
+              break;
+            }
+            _context5.t2 = void 0;
+            _context5.next = 20;
+            break;
+          case 19:
+            _context5.t2 = _yield$softCommand.message;
+          case 20:
+            htm = _context5.t2;
+            if (htm) {
+              _context5.next = 23;
+              break;
+            }
+            return _context5.abrupt("return");
+          case 23:
+            dom = document.createRange().createContextualFragment(htm);
+            newPost = [].find.call(dom.querySelectorAll('.post'), function (post) {
+              var _post$querySelector, _post$querySelector$i, _post$querySelector$i2;
+              return ((_post$querySelector = post.querySelector('.postnumber')) === null || _post$querySelector === void 0 ? void 0 : (_post$querySelector$i = _post$querySelector.innerText) === null || _post$querySelector$i === void 0 ? void 0 : (_post$querySelector$i2 = _post$querySelector$i.match(/[0-9]+/)) === null || _post$querySelector$i2 === void 0 ? void 0 : _post$querySelector$i2[0]) == id;
+            });
+            if (newPost) {
+              _context5.next = 27;
+              break;
+            }
+            return _context5.abrupt("return");
+          case 27:
+            oldPost = interactivePosts.posts.find(function (post) {
+              return post.id == id;
+            });
+            if (oldPost) {
+              _context5.next = 30;
+              break;
+            }
+            return _context5.abrupt("return");
+          case 30:
+            oldPost.el.innerHTML = newPost.innerHTML;
+            oldPost = interactivePosts.processPost.bind(interactivePosts)(oldPost.el);
+          case 32:
+          case "end":
+            return _context5.stop();
+        }
+      }, _callee5, this);
+    }));
+    function submitEdit() {
+      return _submitEdit.apply(this, arguments);
+    }
+    return submitEdit;
+  }()
+};
+actions.submitedit = postingForm.submitEdit.bind(postingForm);
+actions.unedit = function () {
+  postingForm.quitEditingContext();
+};
+function softCommand(_x3) {
+  return _softCommand.apply(this, arguments);
+} // ---------------- Starting ----------------
+function _softCommand() {
+  _softCommand = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee7(command) {
+    var quitEditingContext,
+      fd,
+      f,
+      res,
+      _args7 = arguments;
+    return _regeneratorRuntime().wrap(function _callee7$(_context7) {
+      while (1) switch (_context7.prev = _context7.next) {
+        case 0:
+          quitEditingContext = _args7.length > 1 && _args7[1] !== undefined ? _args7[1] : true;
+          if (!quitEditingContext) {
+            _context7.next = 4;
+            break;
+          }
+          _context7.next = 4;
+          return postingForm.quitEditingContext();
+        case 4:
+          fd = new FormData();
+          fd.append('input', command);
+          _context7.next = 8;
+          return fetch("/console.php", {
+            method: 'POST',
+            body: fd
+          });
+        case 8:
+          f = _context7.sent;
+          if (f.ok) {
+            _context7.next = 11;
+            break;
+          }
+          return _context7.abrupt("return");
+        case 11:
+          _context7.next = 13;
+          return f.json();
+        case 13:
+          res = _context7.sent;
+          return _context7.abrupt("return", res);
+        case 15:
+        case "end":
+          return _context7.stop();
+      }
+    }, _callee7);
+  }));
+  return _softCommand.apply(this, arguments);
+}
+reObserve();
+handleIndex();
+if (document.location.hash) {
+  handleHash(document.location.hash);
+}
