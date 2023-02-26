@@ -10,5 +10,6 @@ UX extension for 314n.org
 	* `PageUp`, `PageDown` to scroll up and down the page;
 	* `Ctrl + Enter` to make post.
 * Login form with obscured password 
+* Interactive posts
 
 [&nbsp;<b><a href="https://github.com/juribiyan/housewife-tools/raw/master/src/housewife-tools.user.js">Install</a></b>&nbsp;] | [ <a href="https://github.com/juribiyan/housewife-tools/raw/master/es5/housewife-tools.user.js">Install (legacy browsers)</a> ]
