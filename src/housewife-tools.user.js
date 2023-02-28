@@ -270,16 +270,6 @@ EventTarget.prototype.delegateEventListener = function(types, targetSelectors, l
       }
     })
   }, options)
-  /*types.forEach(type => {
-    this.addEventListener(type, ev => {
-      targetSelectors.some(selector => {
-        if (ev.target.matches(selector)) {
-          listener.bind(ev.target)(ev)
-          return true
-        }
-      })
-    }, options)
-  })*/
 }
 EventTarget.prototype.addMultiEventListener = function(types, listener, options) {
   if (! (types instanceof Array))
