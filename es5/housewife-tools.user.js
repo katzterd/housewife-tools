@@ -18,7 +18,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://www.0chan.pl/userjs/
-// @version      1.1.0
+// @version      1.1.1
 // @description  UX extension for 314n.org
 // @updateURL    https://github.com/juribiyan/housewife-tools/raw/master/es5/housewife-tools.meta.js
 // @author       Snivy
@@ -1085,7 +1085,8 @@ function _softCommand() {
           _context7.next = 8;
           return fetch("/console.php", {
             method: 'POST',
-            body: fd
+            body: fd,
+            credentials: 'include'
           });
         case 8:
           f = _context7.sent;
