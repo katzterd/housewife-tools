@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://www.0chan.pl/userjs/
-// @version      1.1.1
+// @version      1.1.2
 // @description  UX extension for 314n.org
 // @updateURL    https://github.com/juribiyan/housewife-tools/raw/master/es5/housewife-tools.meta.js
 // @author       Snivy
 // @include      https://314n.org/*
 // @include      https://314n.ru/*
+// @include      http://314n/*
 // @grant        GM_getResourceText
 // @icon         https://raw.githubusercontent.com/juribiyan/housewife-tools/master/icon.png
 // @resource     baseCSS https://raw.githubusercontent.com/Juribiyan/housewife-tools/master/css/hwt.css
@@ -110,12 +111,14 @@ function handleHash(hash) {
     actions.home(false)
     return;
   }
-  let [board, boardPage, topic, topicPage] = hash.match(/^#(?:\/([0-9]+|[^\/\:\s]*))?(?:\:([0-9]+|))?(?:\/([0-9]+|))?(?:\:([0-9]+|))?/).slice(1)
+  let [board, boardPage, topic, topicPage, post] = hash.match(/^#(?:\/([0-9]+|[^\/\:\s]*))?(?:\:([0-9]+|))?(?:\/([0-9]+|))?(?:\:([0-9]+|))?(?:#([0-9]+|))?/).slice(1)
   if (board == '') {
     actions.home(false)
   }
   else if(!isNaN(+board)) {
     if (!isNaN(+topic)) {
+      if (post)
+        interactivePosts.toPin = post
       runCommand(`TOPIC -n ${topic}${!isNaN(+topicPage) ? ` -p ${topicPage}` : ''}`, {skipHistory: true})
     }
     else {
@@ -135,9 +138,13 @@ function handleHash(hash) {
 window.addEventListener('hashchange', ev => {
   handleHash(new URL(ev.newURL)?.hash)
 })
-
+var virtualHistory = {}
 var historySkip = 0 // runCommand() increments this in cases when a command is initiated by a hashchange or concatenated command;
 function pushHistoryState(state, url) {                  // this prevents pushing a state when unnecessary, preserving navigation.
+  virtualHistory = {
+    state: state,
+    url: url
+  }
   if (historySkip > 0) {
     historySkip--
   }
@@ -633,7 +640,7 @@ const interactivePosts = {
     pn.insertAdjacentHTML('beforeend', `<span class="hwt-post-menu">
       <button class="hwt-btn hwt-post-edit">edit</button>
       <button class="hwt-btn hwt-cmdlink hwt-post-delete" data-command="DELETE -p ${id}" data-noload="true">delete</button>
-      <button class="hwt-btn hwt-action" data-action="anchor">#</button>
+      <button class="hwt-btn hwt-action" data-action="anchor" data-id="${id}">#</button>
     </span`)
 
     pn.querySelector('.hwt-post-delete').addMultiEventListener(['click', 'input'], function() {
@@ -707,20 +714,49 @@ const interactivePosts = {
       author: pc
     }
   },
-  init: function(posts) {
+  init: function(posts, postTo) {
     this.posts = [].map.call(posts, this.processPost.bind(this)).filter(post => post !== 0)
+    if (this.toPin) {
+      this.pin(this.toPin, true)
+      this.toPin = false
+    }
   },
   posts: [],
-  highlight: function(pc, self=null) {
+  highlight: function(pc) {
     this.posts.forEach(post => {
       if (pc===false) {
         post.el.classList.remove('hwt-post-highlight')
       }
-      else if (post.author == pc /*&& post.el != self*/) {
+      else if (post.author == pc) {
         post.el.classList.add('hwt-post-highlight')
       }
     })
-  }
+  },
+  pin: function(id, initial=false) {
+    let found
+    this.posts.forEach(post => {
+      if (post.id == id) {
+        post.el.classList.add('hwt-post-pinned')
+        found = true
+        if (initial) {
+          setTimeout(() => post.el.scrollIntoView(), 500)
+        }
+      }
+      else {
+        post.el.classList.remove('hwt-post-pinned')
+      }
+    })
+    return found
+  },
+  toPin: false
+}
+
+actions.anchor = btn => {
+  let id = btn.dataset.id
+  let found = interactivePosts.pin(id)
+  if (!found || !(virtualHistory?.state && virtualHistory?.url)) return;
+  virtualHistory.state.post = id
+  window.history.replaceState(virtualHistory.state, '', virtualHistory.url + '#' + id)
 }
 
 const postingForm = {

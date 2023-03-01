@@ -159,3 +159,8 @@
 .post-code {
   cursor: pointer
 }
+
+.hwt-post-pinned {
+  background: rgb(95 191 255 / 14%);
+  box-shadow: 0 0 0 5px rgb(95 191 255 / 14%);
+}
