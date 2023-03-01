@@ -114,24 +114,32 @@ function handleHash(hash) {
   if (board == '') {
     actions.home(false)
   }
-  else if(!isNaN(+board)) {
-    if (!isNaN(+topic)) {
-      if (post)
-        interactivePosts.toPin = post
-      runCommand(`TOPIC -n ${topic}${!isNaN(+topicPage) ? ` -p ${topicPage}` : ''}`, {skipHistory: true})
+  else {
+    messageBroker.expect()
+    .catch(() => {
+      setBlur(0)
+      window.history.replaceState({screen: 'index'}, '', '#/')
+    })
+
+    if(!isNaN(+board)) {
+      if (!isNaN(+topic)) {
+        if (post)
+          interactivePosts.toPin = post
+        runCommand(`TOPIC -n ${topic}${!isNaN(+topicPage) ? ` -p ${topicPage}` : ''}`, {skipHistory: true})
+      }
+      else {
+        runCommand(`BOARD -n ${board}${!isNaN(+boardPage) ? ` -p ${boardPage}` : ''}`, {skipHistory: true})
+      }
+    }
+    else if (board == 'boards') {
+      runCommand(`BOARDS`, {skipHistory: true})
+    }
+    else if (board == 'rvt') {
+      runCommand(`RVT`, {skipHistory: true})
     }
     else {
-      runCommand(`BOARD -n ${board}${!isNaN(+boardPage) ? ` -p ${boardPage}` : ''}`, {skipHistory: true})
+      console.error('Unhandled hash:', hash)
     }
-  }
-  else if (board == 'boards') {
-    runCommand(`BOARDS`, {skipHistory: true})
-  }
-  else if (board == 'rvt') {
-    runCommand(`RVT`, {skipHistory: true})
-  }
-  else {
-    console.error('Unhandled hash:', hash)
   }
 }
 window.addEventListener('hashchange', ev => {
@@ -446,10 +454,6 @@ function pagination(content=document.querySelector('.content')) {
     return [current, total]
   }
 }
-
-/*function isPathInView() { // dirty
-  return ((document.querySelector('#path').getBoundingClientRect().bottom - document.querySelector('#wrapper').getBoundingClientRect().bottom) < 96)
-}*/
 
 const messageBroker = {
   handle: function(type, message) {

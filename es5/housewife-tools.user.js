@@ -18,7 +18,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://www.0chan.pl/userjs/
-// @version      1.1.1
+// @version      1.1.2
 // @description  UX extension for 314n.org
 // @updateURL    https://github.com/juribiyan/housewife-tools/raw/master/es5/housewife-tools.meta.js
 // @author       Snivy
@@ -180,43 +180,58 @@ function handleHash(hash) {
     actions.home(false);
     return;
   }
-  var _hash$match$slice = hash.match(/^#(?:\/([0-9]+|[^\/\:\s]*))?(?:\:([0-9]+|))?(?:\/([0-9]+|))?(?:\:([0-9]+|))?/).slice(1),
-    _hash$match$slice2 = _slicedToArray(_hash$match$slice, 4),
+  var _hash$match$slice = hash.match(/^#(?:\/([0-9]+|[^\/\:\s]*))?(?:\:([0-9]+|))?(?:\/([0-9]+|))?(?:\:([0-9]+|))?(?:#([0-9]+|))?/).slice(1),
+    _hash$match$slice2 = _slicedToArray(_hash$match$slice, 5),
     board = _hash$match$slice2[0],
     boardPage = _hash$match$slice2[1],
     topic = _hash$match$slice2[2],
-    topicPage = _hash$match$slice2[3];
+    topicPage = _hash$match$slice2[3],
+    post = _hash$match$slice2[4];
   if (board == '') {
     actions.home(false);
-  } else if (!isNaN(+board)) {
-    if (!isNaN(+topic)) {
-      runCommand("TOPIC -n ".concat(topic).concat(!isNaN(+topicPage) ? " -p ".concat(topicPage) : ''), {
+  } else {
+    messageBroker.expect()["catch"](function () {
+      setBlur(0);
+      window.history.replaceState({
+        screen: 'index'
+      }, '', '#/');
+    });
+    if (!isNaN(+board)) {
+      if (!isNaN(+topic)) {
+        if (post) interactivePosts.toPin = post;
+        runCommand("TOPIC -n ".concat(topic).concat(!isNaN(+topicPage) ? " -p ".concat(topicPage) : ''), {
+          skipHistory: true
+        });
+      } else {
+        runCommand("BOARD -n ".concat(board).concat(!isNaN(+boardPage) ? " -p ".concat(boardPage) : ''), {
+          skipHistory: true
+        });
+      }
+    } else if (board == 'boards') {
+      runCommand("BOARDS", {
+        skipHistory: true
+      });
+    } else if (board == 'rvt') {
+      runCommand("RVT", {
         skipHistory: true
       });
     } else {
-      runCommand("BOARD -n ".concat(board).concat(!isNaN(+boardPage) ? " -p ".concat(boardPage) : ''), {
-        skipHistory: true
-      });
+      console.error('Unhandled hash:', hash);
     }
-  } else if (board == 'boards') {
-    runCommand("BOARDS", {
-      skipHistory: true
-    });
-  } else if (board == 'rvt') {
-    runCommand("RVT", {
-      skipHistory: true
-    });
-  } else {
-    console.error('Unhandled hash:', hash);
   }
 }
 window.addEventListener('hashchange', function (ev) {
   var _URL;
   handleHash((_URL = new URL(ev.newURL)) === null || _URL === void 0 ? void 0 : _URL.hash);
 });
+var virtualHistory = {};
 var historySkip = 0; // runCommand() increments this in cases when a command is initiated by a hashchange or concatenated command;
 function pushHistoryState(state, url) {
   // this prevents pushing a state when unnecessary, preserving navigation.
+  virtualHistory = {
+    state: state,
+    url: url
+  };
   if (historySkip > 0) {
     historySkip--;
   } else {
@@ -351,18 +366,7 @@ EventTarget.prototype.delegateEventListener = function (types, targetSelectors, 
       }
     });
   }, options);
-  /*types.forEach(type => {
-    this.addEventListener(type, ev => {
-      targetSelectors.some(selector => {
-        if (ev.target.matches(selector)) {
-          listener.bind(ev.target)(ev)
-          return true
-        }
-      })
-    }, options)
-  })*/
 };
-
 EventTarget.prototype.addMultiEventListener = function (types, listener, options) {
   var _this = this;
   if (!(types instanceof Array)) types = types.split(' ');
@@ -561,11 +565,6 @@ function pagination() {
     return [current, total];
   }
 }
-
-/*function isPathInView() { // dirty
-  return ((document.querySelector('#path').getBoundingClientRect().bottom - document.querySelector('#wrapper').getBoundingClientRect().bottom) < 96)
-}*/
-
 var messageBroker = {
   handle: function handle(type, message) {
     //successful login
@@ -739,7 +738,7 @@ var interactivePosts = {
     var postCode = post.querySelector('.post-code');
     var pc = postCode === null || postCode === void 0 ? void 0 : (_postCode$innerText$m = postCode.innerText.match(/[A-Z]+/)) === null || _postCode$innerText$m === void 0 ? void 0 : _postCode$innerText$m[0];
     if (!pc) return 0;
-    pn.insertAdjacentHTML('beforeend', "<span class=\"hwt-post-menu\">\n      <button class=\"hwt-btn hwt-post-edit\">edit</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-post-delete\" data-command=\"DELETE -p ".concat(id, "\" data-noload=\"true\">delete</button>\n      <button class=\"hwt-btn hwt-action\" data-action=\"anchor\">#</button>\n    </span"));
+    pn.insertAdjacentHTML('beforeend', "<span class=\"hwt-post-menu\">\n      <button class=\"hwt-btn hwt-post-edit\">edit</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-post-delete\" data-command=\"DELETE -p ".concat(id, "\" data-noload=\"true\">delete</button>\n      <button class=\"hwt-btn hwt-action\" data-action=\"anchor\" data-id=\"").concat(id, "\">#</button>\n    </span"));
     pn.querySelector('.hwt-post-delete').addMultiEventListener(['click', 'input'], function () {
       var _this2 = this;
       messageBroker.expect().then(function () {
@@ -823,22 +822,52 @@ var interactivePosts = {
       author: pc
     };
   },
-  init: function init(posts) {
+  init: function init(posts, postTo) {
     this.posts = [].map.call(posts, this.processPost.bind(this)).filter(function (post) {
       return post !== 0;
     });
+    if (this.toPin) {
+      this.pin(this.toPin, true);
+      this.toPin = false;
+    }
   },
   posts: [],
   highlight: function highlight(pc) {
-    var self = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
     this.posts.forEach(function (post) {
       if (pc === false) {
         post.el.classList.remove('hwt-post-highlight');
-      } else if (post.author == pc /*&& post.el != self*/) {
+      } else if (post.author == pc) {
         post.el.classList.add('hwt-post-highlight');
       }
     });
-  }
+  },
+  pin: function pin(id) {
+    var initial = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+    var found;
+    this.posts.forEach(function (post) {
+      if (post.id == id) {
+        post.el.classList.add('hwt-post-pinned');
+        found = true;
+        if (initial) {
+          setTimeout(function () {
+            return post.el.scrollIntoView();
+          }, 500);
+        }
+      } else {
+        post.el.classList.remove('hwt-post-pinned');
+      }
+    });
+    return found;
+  },
+  toPin: false
+};
+actions.anchor = function (btn) {
+  var _virtualHistory, _virtualHistory2;
+  var id = btn.dataset.id;
+  var found = interactivePosts.pin(id);
+  if (!found || !((_virtualHistory = virtualHistory) !== null && _virtualHistory !== void 0 && _virtualHistory.state && (_virtualHistory2 = virtualHistory) !== null && _virtualHistory2 !== void 0 && _virtualHistory2.url)) return;
+  virtualHistory.state.post = id;
+  window.history.replaceState(virtualHistory.state, '', virtualHistory.url + '#' + id);
 };
 var postingForm = {
   get form() {
