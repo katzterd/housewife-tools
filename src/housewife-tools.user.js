@@ -7,7 +7,6 @@
 // @author       Snivy
 // @include      https://314n.org/*
 // @include      https://314n.ru/*
-// @include      http://314n/*
 // @grant        GM_getResourceText
 // @icon         https://raw.githubusercontent.com/juribiyan/housewife-tools/master/icon.png
 // @resource     baseCSS https://raw.githubusercontent.com/Juribiyan/housewife-tools/master/css/hwt.css

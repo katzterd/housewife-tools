@@ -1,4 +1,5 @@
 *.cdr
+*dev.user.js
 
 # Node
 node_modules
