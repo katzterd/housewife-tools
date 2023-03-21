@@ -4,7 +4,7 @@ html {
 body {
     margin: 0;
     background-color: #000;
-    background-image: url(/site/background.png);
+    background-image: url(background.png);
     font-family: "Courier New", Courier, monospace;
     color: #00b5b5;
     display: flex;
