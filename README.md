@@ -12,4 +12,4 @@ UX extension for 314n.org
 * Login form with obscured password 
 * Interactive posts
 
-[&nbsp;<b><a href="https://github.com/juribiyan/housewife-tools/raw/master/src/housewife-tools.user.js">Install</a></b>&nbsp;] | [ <a href="https://github.com/juribiyan/housewife-tools/raw/master/es5/housewife-tools.user.js">Install (legacy browsers)</a> ]
+[&nbsp;<b><a href="https://juribiyan.github.io/housewife-tools/src/housewife-tools.user.js">Install</a></b>&nbsp;] | [ <a href="https://juribiyan.github.io/housewife-tools/es5/housewife-tools.user.js">Install (legacy browsers)</a> ]
