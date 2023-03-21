@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://www.0chan.pl/userjs/
-// @version      1.1.3
+// @version      1.1.4
 // @description  UX extension for 314n.org
 // @updateURL    https://github.com/juribiyan/housewife-tools/raw/master/es5/housewife-tools.meta.js
 // @author       Snivy
-// @include      https://314n.org/*
-// @include      https://314n.ru/*
-// @include      https://314n.0chan.one/*
+// @match        https://314n.org/*
+// @match        https://314n.ru/*
+// @match        http://314n/*
+// @match        https://314n.0chan.one/*
 // @grant        GM_getResourceText
 // @icon         https://raw.githubusercontent.com/juribiyan/housewife-tools/master/icon.png
 // @resource     baseCSS https://raw.githubusercontent.com/Juribiyan/housewife-tools/master/css/hwt.css
@@ -897,7 +898,7 @@ const postingForm = {
       if (~res.message.indexOf("Post has been edited")) {
         let id = this.context?.postID
         if (!id) return;
-        let htm = (await softCommand(`REFRESH`))?.message
+        let htm = (await softCommand(`REFRESH`, true, true))?.message
         if (!htm) return;
         let dom = document.createRange().createContextualFragment(htm)
         let newPost = [].find.call(dom.querySelectorAll('.post'), post => 
@@ -917,9 +918,9 @@ actions.unedit = () => {
   postingForm.quitEditingContext()
 }
 
-async function softCommand(command, quitEditingContext=true) {
+async function softCommand(command, quitEditingContext=true, reflectOnly=false) {
   if (quitEditingContext)
-    await postingForm.quitEditingContext()
+    await postingForm.quitEditingContext(reflectOnly)
   let fd = new FormData()
   fd.append('input', command)
   let f = await fetch(`/console.php`, {
