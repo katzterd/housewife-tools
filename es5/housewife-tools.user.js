@@ -17,18 +17,17 @@ function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o =
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 // ==UserScript==
 // @name         HouseWife Tools
-// @namespace    https://www.0chan.pl/userjs/
-// @version      1.1.4
+// @namespace    https://ochan.ru/userjs/
+// @version      1.1.5
 // @description  UX extension for 314n.org
-// @updateURL    https://github.com/juribiyan/housewife-tools/raw/master/es5/housewife-tools.meta.js
+// @updateURL    https://juribiyan.github.io/housewife-tools/es5/housewife-tools.meta.js
+// @downloadURL  https://juribiyan.github.io/housewife-tools/es5/housewife-tools.user.js
 // @author       Snivy
 // @match        https://314n.org/*
 // @match        https://314n.ru/*
 // @match        http://314n/*
 // @match        https://314n.0chan.one/*
-// @grant        GM_getResourceText
-// @icon         https://raw.githubusercontent.com/juribiyan/housewife-tools/master/icon.png
-// @resource     baseCSS https://raw.githubusercontent.com/Juribiyan/housewife-tools/master/css/hwt.css
+// @icon         https://juribiyan.github.io/housewife-tools/icon.png
 // ==/UserScript==
 
 /*-------------------------------- Routing ---------------------------------*/
@@ -330,6 +329,8 @@ function handleTopic(content, boardID, boardName, topicID) {
 }
 
 /*---------------------------------- CSS -----------------------------------*/
+var cssURL = "https://juribiyan.github.io/housewife-tools/css/hwt.css";
+document.head.insertAdjacentHTML('beforeend', "<link rel=\"stylesheet\" type=\"text/css\" href=\"".concat(cssURL, "\">"));
 var injector = {
   inject: function inject(alias, css) {
     var position = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "beforeend";
@@ -351,8 +352,6 @@ var injector = {
     }
   }
 };
-var baseCSS = GM_getResourceText("baseCSS");
-injector.inject('hwt', baseCSS);
 injector.inject('hwt-monoji', "@import url('https://fonts.googleapis.com/css2?family=Noto+Emoji:wght@300&display=swap');\n  #console { font-family: \"Courier New\", Courier, \"Noto Emoji\", monospace; } ");
 
 /*--------------------------- General utilities ----------------------------*/

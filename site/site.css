@@ -1,0 +1,74 @@
+html {
+    height: 100%;
+}
+body {
+    margin: 0;
+    background-color: #000;
+    background-image: url(/site/background.png);
+    font-family: "Courier New", Courier, monospace;
+    color: #00b5b5;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    animation: bgscroll 1s linear infinite;
+}
+@keyframes bgscroll {
+    from {
+        background-position: 0px 0px;
+    }
+    to {
+        background-position: -40px 40px;
+    }
+}
+a, a:visited {
+    color: #5FBFFF;
+}
+a:hover {
+    color: #469ad2;
+}
+.main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items:  center;
+    justify-content: center;
+}
+footer {
+    font-size: .75em;
+    text-align: center;
+    padding: 20px 0;
+    border-top: 1px dashed #007272;
+}
+.logo {
+    margin: -200px 0 30px;
+    width: 200px;
+    max-width: calc(100% - 10px);
+}
+.logo img {
+    width: 100%;
+    mix-blend-mode: plus-lighter;
+}
+.download-btn {
+    background: #04dbdb1a;
+    text-decoration: none;
+    text-align: center;
+    border: 2px dashed currentColor;
+    margin-bottom: 20px;
+    transition: color .2s;
+    mix-blend-mode: plus-lighter;
+    box-shadow: 0 0 63px #00b5b54f;
+}
+.download-btn:hover {
+    color: #469ad2;
+}
+.download-btn div {
+    font-size: 1.2em;
+    padding: 15px 30px 10px;
+    font-weight: bold;
+    border-bottom: 1px dashed currentColor;
+}
+.download-btn small {
+    padding: 4px 0;
+    text-align: center;
+    display: inline-block;
+}
