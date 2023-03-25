@@ -4,6 +4,7 @@
   background: inherit;
   color: inherit;
   border: inherit;
+  font-size: inherit;
 }
 .hwt-cmdlink:hover {
   text-decoration: underline;
