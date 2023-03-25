@@ -165,3 +165,26 @@
   background: rgb(95 191 255 / 14%);
   box-shadow: 0 0 0 5px rgb(95 191 255 / 14%);
 }
+
+@media (max-width: 910px) {
+  .hwt-logo {
+    font-size: 1.5vw;
+    line-height: normal;
+  }
+}
+@media (max-width: 768px) {
+  .hwt-logo {
+    font-size: inherit;
+  }
+}
+@media (max-width: 680px) {
+  .hwt-logo {
+    font-size: 2vw;
+    line-height: normal;
+  }
+}
+@media (max-width: 440px) {
+  .hwt-logo {
+    font-size: 1.8vw;
+  }
+}

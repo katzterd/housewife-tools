@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://ochan.ru/userjs/
-// @version      1.1.6
+// @version      1.1.7
 // @description  UX extension for 314n.org
 // @updateURL    https://juribiyan.github.io/housewife-tools/src/housewife-tools.meta.js
 // @downloadURL  https://juribiyan.github.io/housewife-tools/src/housewife-tools.user.js
@@ -165,9 +165,9 @@ function pushHistoryState(state, url) {                  // this prevents pushin
 function handleIndex() {
   setLogo()
   let c = document.querySelector('#content')
-  , isLoggedIn = [].find.call(content.childNodes, node => (node.nodeName=="#text" && node.textContent.indexOf('You are logged in')==0))
-  , lastBr = c.querySelector('br:last-of-type')
-  lastBr.insertAdjacentHTML('afterend', `
+  , isLoggedIn = [].find.call(c.childNodes, node => (node.nodeName=="#text" && node.textContent.indexOf('You are logged in')==0))
+  , lastBr = c.querySelector('.hwt-logo')
+  lastBr.insertAdjacentHTML('afterend', `<br>
     <div class="hwt-menu ${!isLoggedIn ? ` hwt-guest` : ''}">
       <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="BOARDS">boards</button>
       <button class="hwt-btn hwt-action hwt-guests-only" data-action="login">login</button>
@@ -179,7 +179,7 @@ function handleIndex() {
       <button class="hwt-btn hwt-cmdlink" data-command="DONATE" data-noload="true">donate</button>
       <button class="hwt-btn hwt-action" data-action="hwtinfo" title="About this UserScript">hwt</button>
       <button class="hwt-btn hwt-cmdlink" data-command="LISTFONTS" title="Select font" data-noload="true">Fonts</button>
-    </div><br>`)
+    </div>`)
 }
 
 function handleBoardList(content) {
@@ -535,7 +535,7 @@ document.addEventListener("keydown", ev => {
 })
 
 function setLogo() {
-  let ver = 'v.' + GM_info.script.version
+  let ver = 'v.' + (GM?.info || GM_info)?.script?.version
   , verSpace = (15 - ver.length)/2
   , verStr = repeatString(' ', Math.ceil(verSpace)) + ver + repeatString(' ', Math.floor(verSpace))
   , logo = [
@@ -545,14 +545,22 @@ function setLogo() {
    "    |   |" +  verStr + "|",
    "        `---------------'"
   ].map(line => line.replace(/ /g, ' '))
-  , node = document.querySelector('#content br:nth-of-type(3)')
-  for (let i = 0; i < logo.length; ) {
+  , node = document.querySelector('#content br')
+  , replacedNodes = ''
+  for (let i = 0; i < 8; ) {
     if (node.nodeName == '#text') {
-      node.textContent += logo[i]
+      replacedNodes += node.textContent + 
+        ((i >= 2) ? (logo?.[i-2] || '') : '')
       i++
     }
-    node = node.nextSibling
+    else {
+      replacedNodes += node.outerHTML
+    }
+    let next = node.nextSibling
+    node.remove()
+    node = next
   }
+  document.querySelector('#content').insertAdjacentHTML('afterbegin', `<div class="hwt-logo">${replacedNodes}</div>`)
 }
 
 actions.reply = () => {
@@ -620,7 +628,7 @@ actions.hwtinfo = () => {
   , d2 = str => `<div style="padding:2px">${str}</div>`
   let msg = `<div class="message"><div style="padding-left:10px">
     <br>
-    ${r(`HouseWife Tools v.${GM_info.script.version}`)}
+    ${r(`HouseWife Tools v.${((GM?.info || GM_info).script.version)?.script?.version}`)}
     <br><br>
     Keyboard Shortcuts:<br><br>
     ${d2(`${r(`Ctrl + →`)}, ${r(`Ctrl + ←`)} Navigate between pages`)}

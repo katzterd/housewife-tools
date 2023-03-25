@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://ochan.ru/userjs/
-// @version      1.1.6
+// @version      1.1.7
 // @description  UX extension for 314n.org
 // @updateURL    https://juribiyan.github.io/housewife-tools/es5/housewife-tools.meta.js
 // @downloadURL  https://juribiyan.github.io/housewife-tools/es5/housewife-tools.user.js

@@ -18,7 +18,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://ochan.ru/userjs/
-// @version      1.1.6
+// @version      1.1.7
 // @description  UX extension for 314n.org
 // @updateURL    https://juribiyan.github.io/housewife-tools/es5/housewife-tools.meta.js
 // @downloadURL  https://juribiyan.github.io/housewife-tools/es5/housewife-tools.user.js
@@ -244,11 +244,11 @@ function pushHistoryState(state, url) {
 function handleIndex() {
   setLogo();
   var c = document.querySelector('#content'),
-    isLoggedIn = [].find.call(content.childNodes, function (node) {
+    isLoggedIn = [].find.call(c.childNodes, function (node) {
       return node.nodeName == "#text" && node.textContent.indexOf('You are logged in') == 0;
     }),
-    lastBr = c.querySelector('br:last-of-type');
-  lastBr.insertAdjacentHTML('afterend', "\n    <div class=\"hwt-menu ".concat(!isLoggedIn ? " hwt-guest" : '', "\">\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"BOARDS\">boards</button>\n      <button class=\"hwt-btn hwt-action hwt-guests-only\" data-action=\"login\">login</button>\n      <button class=\"hwt-btn hwt-action hwt-guests-only\" data-action=\"register\" >register</button>\n      <button class=\"hwt-btn hwt-cmdlink\" data-command=\"HELP\" data-noload=\"true\">help</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"LOGOUT\" data-noload=\"true\">logout</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"RVT\" title=\"Recent viewed topics\">recent</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"INVITES\" data-noload=\"true\">invites</button>\n      <button class=\"hwt-btn hwt-cmdlink\" data-command=\"DONATE\" data-noload=\"true\">donate</button>\n      <button class=\"hwt-btn hwt-action\" data-action=\"hwtinfo\" title=\"About this UserScript\">hwt</button>\n      <button class=\"hwt-btn hwt-cmdlink\" data-command=\"LISTFONTS\" title=\"Select font\" data-noload=\"true\">Fonts</button>\n    </div><br>"));
+    lastBr = c.querySelector('.hwt-logo');
+  lastBr.insertAdjacentHTML('afterend', "<br>\n    <div class=\"hwt-menu ".concat(!isLoggedIn ? " hwt-guest" : '', "\">\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"BOARDS\">boards</button>\n      <button class=\"hwt-btn hwt-action hwt-guests-only\" data-action=\"login\">login</button>\n      <button class=\"hwt-btn hwt-action hwt-guests-only\" data-action=\"register\" >register</button>\n      <button class=\"hwt-btn hwt-cmdlink\" data-command=\"HELP\" data-noload=\"true\">help</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"LOGOUT\" data-noload=\"true\">logout</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"RVT\" title=\"Recent viewed topics\">recent</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"INVITES\" data-noload=\"true\">invites</button>\n      <button class=\"hwt-btn hwt-cmdlink\" data-command=\"DONATE\" data-noload=\"true\">donate</button>\n      <button class=\"hwt-btn hwt-action\" data-action=\"hwtinfo\" title=\"About this UserScript\">hwt</button>\n      <button class=\"hwt-btn hwt-cmdlink\" data-command=\"LISTFONTS\" title=\"Select font\" data-noload=\"true\">Fonts</button>\n    </div>"));
 }
 function handleBoardList(content) {
   pushHistoryState({
@@ -458,21 +458,21 @@ function runCommand(_x2) {
 }
 function _runCommand() {
   _runCommand = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee6(command) {
-    var _ref4,
-      _ref4$load,
+    var _ref5,
+      _ref5$load,
       load,
-      _ref4$skipHistory,
+      _ref5$skipHistory,
       skipHistory,
       cmdLine,
-      _ref5,
       _ref6,
+      _ref7,
       thisCommand,
       nextCommand,
       _args6 = arguments;
     return _regeneratorRuntime().wrap(function _callee6$(_context6) {
       while (1) switch (_context6.prev = _context6.next) {
         case 0:
-          _ref4 = _args6.length > 1 && _args6[1] !== undefined ? _args6[1] : {}, _ref4$load = _ref4.load, load = _ref4$load === void 0 ? true : _ref4$load, _ref4$skipHistory = _ref4.skipHistory, skipHistory = _ref4$skipHistory === void 0 ? false : _ref4$skipHistory;
+          _ref5 = _args6.length > 1 && _args6[1] !== undefined ? _args6[1] : {}, _ref5$load = _ref5.load, load = _ref5$load === void 0 ? true : _ref5$load, _ref5$skipHistory = _ref5.skipHistory, skipHistory = _ref5$skipHistory === void 0 ? false : _ref5$skipHistory;
           cmdLine = document.querySelector('#cmd');
           if (cmdLine) {
             _context6.next = 4;
@@ -484,7 +484,7 @@ function _runCommand() {
           return postingForm.quitEditingContext();
         case 6:
           // If in editing context prevent a command from being leaked into the post body
-          _ref5 = command instanceof Array ? command : [command], _ref6 = _slicedToArray(_ref5, 2), thisCommand = _ref6[0], nextCommand = _ref6[1];
+          _ref6 = command instanceof Array ? command : [command], _ref7 = _slicedToArray(_ref6, 2), thisCommand = _ref7[0], nextCommand = _ref7[1];
           if (nextCommand) {
             queuedCommand = [nextCommand, {
               load: load,
@@ -644,20 +644,27 @@ document.addEventListener("keydown", function (ev) {
   }
 });
 function setLogo() {
-  var ver = 'v.' + GM_info.script.version,
+  var _ref3, _ref3$script, _GM;
+  var ver = 'v.' + ((_ref3 = ((_GM = GM) === null || _GM === void 0 ? void 0 : _GM.info) || GM_info) === null || _ref3 === void 0 ? void 0 : (_ref3$script = _ref3.script) === null || _ref3$script === void 0 ? void 0 : _ref3$script.version),
     verSpace = (15 - ver.length) / 2,
     verStr = repeatString(' ', Math.ceil(verSpace)) + ver + repeatString(' ', Math.floor(verSpace)),
     logo = ["        ,---------------.", "    |   |   HouseWife   |", "  --+-- |     Tools     |", "    |   |" + verStr + "|", "        `---------------'"].map(function (line) {
       return line.replace(/ /g, ' ');
     }),
-    node = document.querySelector('#content br:nth-of-type(3)');
-  for (var i = 0; i < logo.length;) {
+    node = document.querySelector('#content br'),
+    replacedNodes = '';
+  for (var i = 0; i < 8;) {
     if (node.nodeName == '#text') {
-      node.textContent += logo[i];
+      replacedNodes += node.textContent + (i >= 2 ? (logo === null || logo === void 0 ? void 0 : logo[i - 2]) || '' : '');
       i++;
+    } else {
+      replacedNodes += node.outerHTML;
     }
-    node = node.nextSibling;
+    var next = node.nextSibling;
+    node.remove();
+    node = next;
   }
+  document.querySelector('#content').insertAdjacentHTML('afterbegin', "<div class=\"hwt-logo\">".concat(replacedNodes, "</div>"));
 }
 actions.reply = function () {
   var _postingForm$textarea;
@@ -721,13 +728,14 @@ function startAnimation() {
   }, speed);
 }
 actions.hwtinfo = function () {
+  var _script$version, _script$version$scrip, _GM2;
   var r = function r(str) {
       return "<span class=\"reverse\">&nbsp;".concat(str, "&nbsp;</span>");
     },
     d2 = function d2(str) {
       return "<div style=\"padding:2px\">".concat(str, "</div>");
     };
-  var msg = "<div class=\"message\"><div style=\"padding-left:10px\">\n    <br>\n    ".concat(r("HouseWife Tools v.".concat(GM_info.script.version)), "\n    <br><br>\n    Keyboard Shortcuts:<br><br>\n    ").concat(d2("".concat(r("Ctrl + \u2192"), ", ").concat(r("Ctrl + \u2190"), " Navigate between pages")), "\n    ").concat(d2("".concat(r("Ctrl + \u2191"), " Move up one layer")), "\n    ").concat(d2("".concat(r("PageUp"), ", ").concat(r("PageDown"), " Scroll up and down the page")), "\n    ").concat(d2("".concat(r("Ctrl + Enter"), " Submit a post")), "\n    <br><br>\n    ").concat(d2("<a href=\"https://github.com/Juribiyan/housewife-tools\" target=\"_blank\">Project GitHub</a>"), "\n    ").concat(d2("<a href=\"#/1/20086:1\" target=\"_blank\">HWT Discussion</a>"), "\n  </div></div>");
+  var msg = "<div class=\"message\"><div style=\"padding-left:10px\">\n    <br>\n    ".concat(r("HouseWife Tools v.".concat((_script$version = (((_GM2 = GM) === null || _GM2 === void 0 ? void 0 : _GM2.info) || GM_info).script.version) === null || _script$version === void 0 ? void 0 : (_script$version$scrip = _script$version.script) === null || _script$version$scrip === void 0 ? void 0 : _script$version$scrip.version)), "\n    <br><br>\n    Keyboard Shortcuts:<br><br>\n    ").concat(d2("".concat(r("Ctrl + \u2192"), ", ").concat(r("Ctrl + \u2190"), " Navigate between pages")), "\n    ").concat(d2("".concat(r("Ctrl + \u2191"), " Move up one layer")), "\n    ").concat(d2("".concat(r("PageUp"), ", ").concat(r("PageDown"), " Scroll up and down the page")), "\n    ").concat(d2("".concat(r("Ctrl + Enter"), " Submit a post")), "\n    <br><br>\n    ").concat(d2("<a href=\"https://github.com/Juribiyan/housewife-tools\" target=\"_blank\">Project GitHub</a>"), "\n    ").concat(d2("<a href=\"#/1/20086:1\" target=\"_blank\">HWT Discussion</a>"), "\n  </div></div>");
   document.querySelector('#content').insertAdjacentHTML('beforeend', msg);
 };
 
