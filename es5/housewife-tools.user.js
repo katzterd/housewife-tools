@@ -18,7 +18,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://ochan.ru/userjs/
-// @version      1.1.5
+// @version      1.1.6
 // @description  UX extension for 314n.org
 // @updateURL    https://juribiyan.github.io/housewife-tools/es5/housewife-tools.meta.js
 // @downloadURL  https://juribiyan.github.io/housewife-tools/es5/housewife-tools.user.js
@@ -50,7 +50,7 @@ function observe(mutationList, observer) {
             return (i === null || i === void 0 ? void 0 : (_i$classList2 = i.classList) === null || _i$classList2 === void 0 ? void 0 : _i$classList2.contains('error')) || (i === null || i === void 0 ? void 0 : (_i$classList3 = i.classList) === null || _i$classList3 === void 0 ? void 0 : _i$classList3.contains('message'));
           });
           if (msg) {
-            messageBroker.handle(msg.className, msg.textContent);
+            messageBroker.handle(msg, msg.className, msg.textContent);
           }
         }
       }
@@ -248,7 +248,7 @@ function handleIndex() {
       return node.nodeName == "#text" && node.textContent.indexOf('You are logged in') == 0;
     }),
     lastBr = c.querySelector('br:last-of-type');
-  lastBr.insertAdjacentHTML('afterend', "\n    <div class=\"hwt-menu ".concat(!isLoggedIn ? " hwt-guest" : '', "\">\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"BOARDS\">boards</button>\n      <button class=\"hwt-btn hwt-action hwt-guests-only\" data-action=\"login\">login</button>\n      <button class=\"hwt-btn hwt-action hwt-guests-only\" data-action=\"register\" >register</button>\n      <button class=\"hwt-btn hwt-cmdlink\" data-command=\"HELP\" data-noload=\"true\">help</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"LOGOUT\" data-noload=\"true\">logout</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"RVT\" title=\"Recent viewed topics\">recent</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"INVITES\" data-noload=\"true\">invites</button>\n      <button class=\"hwt-btn hwt-cmdlink\" data-command=\"DONATE\" data-noload=\"true\">donate</button>\n      <button class=\"hwt-btn hwt-action\" data-action=\"hwtinfo\" title=\"About this UserScript\">hwt</button>\n    </div><br>"));
+  lastBr.insertAdjacentHTML('afterend', "\n    <div class=\"hwt-menu ".concat(!isLoggedIn ? " hwt-guest" : '', "\">\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"BOARDS\">boards</button>\n      <button class=\"hwt-btn hwt-action hwt-guests-only\" data-action=\"login\">login</button>\n      <button class=\"hwt-btn hwt-action hwt-guests-only\" data-action=\"register\" >register</button>\n      <button class=\"hwt-btn hwt-cmdlink\" data-command=\"HELP\" data-noload=\"true\">help</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"LOGOUT\" data-noload=\"true\">logout</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"RVT\" title=\"Recent viewed topics\">recent</button>\n      <button class=\"hwt-btn hwt-cmdlink hwt-members-only\" data-command=\"INVITES\" data-noload=\"true\">invites</button>\n      <button class=\"hwt-btn hwt-cmdlink\" data-command=\"DONATE\" data-noload=\"true\">donate</button>\n      <button class=\"hwt-btn hwt-action\" data-action=\"hwtinfo\" title=\"About this UserScript\">hwt</button>\n      <button class=\"hwt-btn hwt-cmdlink\" data-command=\"LISTFONTS\" title=\"Select font\" data-noload=\"true\">Fonts</button>\n    </div><br>"));
 }
 function handleBoardList(content) {
   pushHistoryState({
@@ -352,7 +352,6 @@ var injector = {
     }
   }
 };
-injector.inject('hwt-monoji', "@import url('https://fonts.googleapis.com/css2?family=Noto+Emoji:wght@300&display=swap');\n  #console { font-family: \"Courier New\", Courier, \"Noto Emoji\", monospace; } ");
 
 /*--------------------------- General utilities ----------------------------*/
 EventTarget.prototype.delegateEventListener = function (types, targetSelectors, listener, options) {
@@ -426,7 +425,8 @@ function exposedPromise() {
 // Turns a text node into a "link"
 function makeClickable(node, command) {
   var title = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
-  node.replaceWith(createElementFromHTML("<button class=\"hwt-cmdlink\" data-command=\"".concat(command, "\" title=\"").concat(title, "\">").concat(node.textContent, "</button>")));
+  var noload = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+  node.replaceWith(createElementFromHTML("<button class=\"hwt-cmdlink\" data-command=\"".concat(command, "\" title=\"").concat(title, "\" ").concat(noload ? " data-noload=\"true\"" : '', ">").concat(node.textContent, "</button>")));
 }
 // Auto-inputting commands
 document.body.delegateEventListener(['click', 'input'], '.hwt-cmdlink', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
@@ -567,7 +567,7 @@ function pagination() {
   }
 }
 var messageBroker = {
-  handle: function handle(type, message) {
+  handle: function handle(element, type, message) {
     //successful login
     if (type == 'message' && message == 'you are logged in') {
       document.querySelector('.hwt-login-form').remove();
@@ -594,6 +594,10 @@ var messageBroker = {
     if (type == 'error') {
       var _this$expected2;
       (_this$expected2 = this.expected) === null || _this$expected2 === void 0 ? void 0 : _this$expected2.reject();
+    }
+    // Font list
+    if (type == 'message' && ~message.indexOf('[0] Default')) {
+      linkifyFonts(element);
     }
   },
   // expected: {},
@@ -1086,12 +1090,9 @@ var postingForm = {
   }()
 };
 actions.submitedit = postingForm.submitEdit.bind(postingForm);
-actions.unedit = function () {
-  postingForm.quitEditingContext();
-};
 function softCommand(_x3) {
   return _softCommand.apply(this, arguments);
-} // ---------------- Starting ----------------
+}
 function _softCommand() {
   _softCommand = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee7(command) {
     var quitEditingContext,
@@ -1141,6 +1142,20 @@ function _softCommand() {
   }));
   return _softCommand.apply(this, arguments);
 }
+function linkifyFonts(msg) {
+  var _msg$childNodes;
+  msg === null || msg === void 0 ? void 0 : (_msg$childNodes = msg.childNodes) === null || _msg$childNodes === void 0 ? void 0 : _msg$childNodes.forEach(function (node) {
+    if (node.nodeName == '#text') {
+      var _node$textContent$mat2;
+      var n = (_node$textContent$mat2 = node.textContent.match(/\[([0-9]+)\]/)) === null || _node$textContent$mat2 === void 0 ? void 0 : _node$textContent$mat2[1];
+      if (n) {
+        makeClickable(node, "SETFONT -f ".concat(n), 'Set font', true);
+      }
+    }
+  });
+}
+
+// ---------------- Starting ----------------
 reObserve();
 handleIndex();
 if (document.location.hash) {
