@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://ochan.ru/userjs/
-// @version      1.1.5
+// @version      1.1.6
 // @description  UX extension for 314n.org
 // @updateURL    https://juribiyan.github.io/housewife-tools/src/housewife-tools.meta.js
 // @downloadURL  https://juribiyan.github.io/housewife-tools/src/housewife-tools.user.js
@@ -27,7 +27,7 @@ function observe(mutationList, observer) {
       else {
         let msg = [].find.call(mutation.addedNodes, i => i?.classList?.contains('error') || i?.classList?.contains('message'))
         if (msg) {
-          messageBroker.handle(msg.className, msg.textContent)
+          messageBroker.handle(msg, msg.className, msg.textContent)
         }
       }
     }
@@ -178,6 +178,7 @@ function handleIndex() {
       <button class="hwt-btn hwt-cmdlink hwt-members-only" data-command="INVITES" data-noload="true">invites</button>
       <button class="hwt-btn hwt-cmdlink" data-command="DONATE" data-noload="true">donate</button>
       <button class="hwt-btn hwt-action" data-action="hwtinfo" title="About this UserScript">hwt</button>
+      <button class="hwt-btn hwt-cmdlink" data-command="LISTFONTS" title="Select font" data-noload="true">Fonts</button>
     </div><br>`)
 }
 
@@ -268,9 +269,6 @@ var injector = {
   }
 }
 
-injector.inject('hwt-monoji', `@import url('https://fonts.googleapis.com/css2?family=Noto+Emoji:wght@300&display=swap');
-  #console { font-family: "Courier New", Courier, "Noto Emoji", monospace; } `)
-
 
 /*--------------------------- General utilities ----------------------------*/
 EventTarget.prototype.delegateEventListener = function(types, targetSelectors, listener, options) {
@@ -344,8 +342,8 @@ function exposedPromise() {
 
 /*------------------------- App-specific utilities -------------------------*/
 // Turns a text node into a "link"
-function makeClickable(node, command, title='') {
-  node.replaceWith(createElementFromHTML(`<button class="hwt-cmdlink" data-command="${command}" title="${title}">${node.textContent}</button>`))
+function makeClickable(node, command, title='', noload=false) {
+  node.replaceWith(createElementFromHTML(`<button class="hwt-cmdlink" data-command="${command}" title="${title}" ${noload ? ` data-noload="true"` : ''}>${node.textContent}</button>`))
 }
 // Auto-inputting commands
 document.body.delegateEventListener(['click', 'input'], '.hwt-cmdlink', async function() {
@@ -458,7 +456,7 @@ function pagination(content=document.querySelector('.content')) {
 }
 
 const messageBroker = {
-  handle: function(type, message) {
+  handle: function(element, type, message) {
     //successful login
     if (type == 'message' && message == 'you are logged in') {
       document.querySelector('.hwt-login-form').remove()
@@ -481,6 +479,10 @@ const messageBroker = {
     // Unsuccessful deletion / edit
     if (type == 'error') {
       this.expected?.reject()
+    }
+    // Font list
+    if (type == 'message' && ~message.indexOf('[0] Default')) {
+      linkifyFonts(element)
     }
   },
   // expected: {},
@@ -914,9 +916,6 @@ const postingForm = {
 }
 
 actions.submitedit = postingForm.submitEdit.bind(postingForm)
-actions.unedit = () => {
-  postingForm.quitEditingContext()
-}
 
 async function softCommand(command, quitEditingContext=true, reflectOnly=false) {
   if (quitEditingContext)
@@ -933,6 +932,16 @@ async function softCommand(command, quitEditingContext=true, reflectOnly=false) 
   return res
 }
 
+function linkifyFonts(msg) {
+  msg?.childNodes?.forEach(node => {
+    if (node.nodeName == '#text') {
+      let n = node.textContent.match(/\[([0-9]+)\]/)?.[1]
+      if (n) {
+        makeClickable(node, `SETFONT -f ${n}`, 'Set font', true)
+      }
+    }
+  })
+}
 
 // ---------------- Starting ----------------
 reObserve()
