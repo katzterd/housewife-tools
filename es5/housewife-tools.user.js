@@ -18,7 +18,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://ochan.ru/userjs/
-// @version      1.1.7
+// @version      1.1.8
 // @description  UX extension for 314n.org
 // @updateURL    https://juribiyan.github.io/housewife-tools/es5/housewife-tools.meta.js
 // @downloadURL  https://juribiyan.github.io/housewife-tools/es5/housewife-tools.user.js
@@ -142,7 +142,9 @@ actions.home = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime(
         pushHistory = _args.length > 0 && _args[0] !== undefined ? _args[0] : true;
         setBlur(1);
         _context.next = 4;
-        return fetch("/");
+        return fetch("/", {
+          credentials: 'include'
+        });
       case 4:
         res = _context.sent;
         if (res.ok) {

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://ochan.ru/userjs/
-// @version      1.1.7
+// @version      1.1.8
 // @description  UX extension for 314n.org
 // @updateURL    https://juribiyan.github.io/housewife-tools/src/housewife-tools.meta.js
 // @downloadURL  https://juribiyan.github.io/housewife-tools/src/housewife-tools.user.js
@@ -92,7 +92,7 @@ var actions = {}
 
 actions.home = async function(pushHistory=true) {
   setBlur(1)
-  let res = await fetch(`/`)
+  let res = await fetch(`/`, {credentials: 'include'})
   if (! res.ok) return;
   let htm = await res.text()
   if (!htm) return;
