@@ -18,7 +18,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://ochan.ru/userjs/
-// @version      1.1.8
+// @version      1.1.9
 // @description  UX extension for 314n.org
 // @updateURL    https://juribiyan.github.io/housewife-tools/es5/housewife-tools.meta.js
 // @downloadURL  https://juribiyan.github.io/housewife-tools/es5/housewife-tools.user.js
@@ -500,9 +500,11 @@ function _runCommand() {
             historySkip++;
           }
           cmdLine.value = thisCommand;
-          cmdLine.dispatchEvent(new KeyboardEvent('keydown', {
-            keyCode: 13
-          })); // Simulatie pressing Enter
+          setTimeout(function () {
+            cmdLine.dispatchEvent(new KeyboardEvent('keydown', {
+              keyCode: 13
+            })); // Simulatie pressing Enter
+          }, 100);
           if (load) setBlur(1);
         case 12:
         case "end":

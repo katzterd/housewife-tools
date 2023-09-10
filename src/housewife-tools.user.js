@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HouseWife Tools
 // @namespace    https://ochan.ru/userjs/
-// @version      1.1.8
+// @version      1.1.9
 // @description  UX extension for 314n.org
 // @updateURL    https://juribiyan.github.io/housewife-tools/src/housewife-tools.meta.js
 // @downloadURL  https://juribiyan.github.io/housewife-tools/src/housewife-tools.user.js
@@ -379,7 +379,9 @@ async function runCommand(command, {load = true, skipHistory = false} = {}) {
     historySkip++
   }
   cmdLine.value = thisCommand
-  cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
+  setTimeout(() => {
+    cmdLine.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 13})) // Simulatie pressing Enter
+  }, 100)
   if (load)
     setBlur(1)
 }
