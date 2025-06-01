@@ -11,6 +11,7 @@
 // @match        http://314n/*
 // @match        https://314n.0chan.one/*
 // @match        https://314n.1chan.cyou/*
+// @match        https://314n.0chan.club/*
 // @match        http://pinachvoguta4szixhost7yh2xkkemjeerfba6tang7siudwusrlsiqd.onion/*
 // @match        http://pinachv6cgxmcuojuiabrz6fyizzq2m2m4iu25pcmtesx37f3i4q.b32.i2p/*
 // @match        http://[216:acbf:eccd:78f5:f871:7148:dc01:c666]/*
